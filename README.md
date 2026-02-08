@@ -48,6 +48,18 @@ go get -u github.com/joho/godotenv
 // https://www.bilibili.com/opus/1068145464453365769 => 有詳細步驟
 go install github.com/cosmtrek/air@latest // 路徑已經改成下方這個
 go install github.com/air-verse/air@latest
+
+<!-- install postgres -->
+// 5432 port , 密碼:提示結婚 (安裝時的設定)
+psql --version // 確認是否下載
+psql -U postgres // 指定以 postgres 用户身份連接數據庫，如果失敗改用 psql -U z0983 ，電腦名稱是 z0983。
+
+\l // create new database or look at database, show us all of db, 正常會出現 postgres、template0、template1
+CREATE DARABSE // write sql query in uppercase
+
+rmdir /S /Q "C:\Program Files\PostgreSQL" // 安裝失敗的時候強制刪除 
+C:\Program Files\PostgreSQL\18\bin // 加到系統環境變數
+介紹 pgAdmin UI介面用法 // https://www.youtube.com/watch?v=T1PrXly6kOs
 ```
 
 #### golang air補充
@@ -55,7 +67,6 @@ go install github.com/air-verse/air@latest
 // 因為本專案的main.go在cmd路徑裡
 .air.toml 裡面的 cmd 加上 ./cmd/api // cmd = "go build -o ./tmp/main.exe ./cmd/api" 
 ```
-
 
 
 ```

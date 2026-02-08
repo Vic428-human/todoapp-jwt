@@ -13,7 +13,7 @@ func main() {
 
 		// gin.H is a shortcut for map[string]interface{} or map[string]any
 		c.JSON(200, gin.H{
-			"message": "todo api running successfully!!!",
+			"message": "!!!todo api running successfully~~~",
 			"status":  "success",
 		})
 	})
