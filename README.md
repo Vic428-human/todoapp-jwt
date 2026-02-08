@@ -29,7 +29,11 @@ go get -u github.com/jackc/pgx/v5/pgxpool //for a concurrency safe connection po
 跨資料庫相容性: Migrate支援廣泛的資料庫技術，這意味著同一套遷移腳本可以用於不同的資料庫系統，從而簡化了多環境或多資料庫系統的遷移策略。
 易於整合和擴展: 作為一個Go庫，Migrate可以輕鬆整合到Go應用程式中。它也支援透過插件來擴展更多的資料庫類型或自訂遷移邏輯。
 */
+// https://github.com/golang-migrate/migrate/tree/master/database/postgres
 go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+// https://pkg.go.dev/golang.org/x/crypto/bcrypt
+go get -u golang.org/x/crypto/bcrypt // generates a bcrypt hash of a given password
 ```
 
 ```
