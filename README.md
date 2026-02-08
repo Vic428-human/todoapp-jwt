@@ -1,6 +1,10 @@
 
 > 這個專案主要用於理解 JWT + GIN + GOLANG + PostgreSQL 規劃登入註冊功能，完成後會把它遷移過去跟交易所的登入功能做整合
 
+
+####  本專案用到的dependencies
+> 來源跟用途說明
+
 ```
 <!-- 快速生成檔案 -->
 mkdir cmd\api internal\config,internal\database,internal\handlers,internal\middleware,internal\models,internal\repository,migrations
@@ -41,10 +45,18 @@ go get -u golang.org/x/crypto/bcrypt
 go get -u github.com/joho/godotenv 
 
 <!-- 熱重載工具，作用是在你修改代碼文件後自動重新編譯並重啟程序 -->
-// https://www.bilibili.com/opus/1068145464453365769
+// https://www.bilibili.com/opus/1068145464453365769 => 有詳細步驟
 go install github.com/cosmtrek/air@latest // 路徑已經改成下方這個
 go install github.com/air-verse/air@latest
 ```
+
+#### golang air補充
+```
+// 因為本專案的main.go在cmd路徑裡
+.air.toml 裡面的 cmd 加上 ./cmd/api // cmd = "go build -o ./tmp/main.exe ./cmd/api" 
+```
+
+
 
 ```
 yourproject/
