@@ -3,5 +3,19 @@
 
 ```
 <!-- 快速生成檔案 -->
-mkdir interna\database,internal\handlers,internal\middleware,internal\models,internal\repository,migrations
+mkdir cmd\api internal\config,internal\database,internal\handlers,internal\middleware,internal\models,internal\repository,migrations
 ```
+
+
+yourproject/
+├── go.mod
+├── cmd/  reponsible forrunning database
+│
+├── internal/   
+│ └── config/    // set enviroment
+│ └── database/    // database connection setup and pooling 
+│ └── config/    // handling our http request
+│ └── middleware/    // use for authentication
+└── frontend/
+
+│
