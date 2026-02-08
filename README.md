@@ -16,12 +16,12 @@ go run cmd\api\main.go
 // https://ithelp.ithome.com.tw/articles/10387192
 go get -u github.com/gin-gonic/gin
 
-// install postgres's driver
+<!-- install postgres's driver -->
 // https://github.com/jackc/pgx/blob/f56ca73076f3fc935a2a049cf78993bfcbba8f68/examples/url_shortener/main.go#L11
 go get -u github.com/jackc/pgx/v5 
 go get -u github.com/jackc/pgx/v5/pgxpool //for a concurrency safe connection pool
 
-// install jwt for authentication
+<!-- install jwt for authentication -->
 /*
 為何選擇Migrate庫
 版本控制和可追溯性: Migrate庫提供了一種簡潔的方式來版本化資料庫結構的改變。每個遷移都被保存為一個單獨的檔案，檔名通常包含時間戳和描述，這使得追蹤和審計資料庫結構的變更變得簡單直觀。這與手動管理一系列.sql腳本檔案相比，更加系統化和易於維護。
@@ -32,8 +32,13 @@ go get -u github.com/jackc/pgx/v5/pgxpool //for a concurrency safe connection po
 // https://github.com/golang-migrate/migrate/tree/master/database/postgres
 go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
+<!-- generates a bcrypt hash of a given password -->
 // https://pkg.go.dev/golang.org/x/crypto/bcrypt
-go get -u golang.org/x/crypto/bcrypt // generates a bcrypt hash of a given password
+go get -u golang.org/x/crypto/bcrypt  
+
+<!--  read environment variables in golang -->
+// https://github.com/joho/godotenv
+go get -u github.com/joho/godotenv 
 ```
 
 ```
