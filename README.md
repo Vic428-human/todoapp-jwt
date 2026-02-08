@@ -39,6 +39,11 @@ go get -u golang.org/x/crypto/bcrypt
 <!--  read environment variables in golang -->
 // https://github.com/joho/godotenv
 go get -u github.com/joho/godotenv 
+
+<!-- 熱重載工具，作用是在你修改代碼文件後自動重新編譯並重啟程序 -->
+// https://www.bilibili.com/opus/1068145464453365769
+go install github.com/cosmtrek/air@latest // 路徑已經改成下方這個
+go install github.com/air-verse/air@latest
 ```
 
 ```
