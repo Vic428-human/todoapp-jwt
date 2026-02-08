@@ -1,1 +1,8 @@
-//  reponsible forrunning database
+// reponsible forrunning database
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Hello World")
+}
