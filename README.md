@@ -32,7 +32,7 @@ go get -u github.com/jackc/pgx/v5/pgxpool //for a concurrency safe connection po
 go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 ```
 
-
+```
 yourproject/
 ├── go.mod
 ├── cmd/  reponsible forrunning database
@@ -46,3 +46,4 @@ yourproject/
 │ └── repository/    // all of database operations
 ├── internal/
 └── frontend/ 預期放登入註冊畫面
+```
