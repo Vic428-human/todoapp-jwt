@@ -20,7 +20,7 @@ func CreateProduct(pool *pgxpool.Pool, ownerId string, title string, game string
 	updatedAt := time.Now()
 
 	// 建立新一筆的產品
-	item := &models.Product{
+	product := &models.Product{
 		OwnerID:      ownerId,
 		Title:        title,
 		Game:         game,
@@ -36,33 +36,32 @@ func CreateProduct(pool *pgxpool.Pool, ownerId string, title string, game string
 		CreatedAt:    createdAt,
 		UpdatedAt:    updatedAt,
 	}
-
+	// 執行 SQL 插入語句，RETURNING id 以取得主鍵
 	query := `
 		INSERT INTO products (owner_id, title, game, platform, username, views, monthly_views, price, description, verified, country, featured, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		RETURNING id
 	`
-
+	// 使用 QueryRow(...).Scan(...) 來取得 RETURNING id，確保 todo.ID 被正確填入
 	err := pool.QueryRow(ctx, query,
-		item.OwnerID,
-		item.Title,
-		item.Game,
-		item.Platform,
-		item.Username,
-		item.Views,
-		item.MonthlyViews,
-		item.Price,
-		item.Description,
-		item.Verified,
-		item.Country,
-		item.Featured,
-		item.CreatedAt,
-		item.UpdatedAt,
-	).Scan(&item.ID)
-
+		product.OwnerID,
+		product.Title,
+		product.Game,
+		product.Platform,
+		product.Username,
+		product.Views,
+		product.MonthlyViews,
+		product.Price,
+		product.Description,
+		product.Verified,
+		product.Country,
+		product.Featured,
+		product.CreatedAt,
+		product.UpdatedAt,
+	).Scan(&product.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert product: %w", err)
 	}
 
-	return item, nil
+	return product, nil
 }
