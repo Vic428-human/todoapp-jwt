@@ -34,7 +34,11 @@ go get -u github.com/jackc/pgx/v5/pgxpool //for a concurrency safe connection po
 易於整合和擴展: 作為一個Go庫，Migrate可以輕鬆整合到Go應用程式中。它也支援透過插件來擴展更多的資料庫類型或自訂遷移邏輯。
 */
 // https://github.com/golang-migrate/migrate/tree/master/database/postgres
-go install -tags 'postgres' github.com/golang-migrate/migrate//cmd/migrate@latest
+go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+// migration is like version control for db, every single table, we have two migrations 1.up migration and 2. down migration 
+
+<!-- 在 migrations 資料夾中建立一組用 SQL 撰寫、用遞增編號命名的「建立 todos 資料表」migration 檔案。 -->
+migrate create -ext sql -dir migrations -seq create_todos_table // 用途:新專案要加資料表、修改 schema（加欄位、改型別）、團隊合作時，讓大家資料庫版本一致
 
 <!-- generates a bcrypt hash of a given password -->
 // https://pkg.go.dev/golang.org/x/crypto/bcrypt
@@ -61,7 +65,8 @@ C:\Program Files\PostgreSQL\18\bin // 加到系統環境變數
 介紹 pgAdmin UI介面用法 // https://www.youtube.com/watch?v=T1PrXly6kOs
 \c todo_api // connected to database
 \q // quit connect 
-
+psql -U postgres -d todo_api // connet to certain db
+\dt // find table 
 <!-- create config.go file -->
 NEW-ITEM -Path internal\config\config.go -ItemType File
 ```

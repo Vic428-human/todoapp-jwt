@@ -41,6 +41,6 @@ func main() {
 			"database": "connected",
 		})
 	})
-	router.Run() // listens on 0.0.0.0:8080 by default
+	router.Run(":" + cfg.Port) // listens on 0.0.0.0:8080 by default
 
 }
