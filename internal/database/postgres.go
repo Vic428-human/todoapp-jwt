@@ -26,6 +26,7 @@ type DBConfig struct {
 }
 
 // Advanced Configuration (More flexible, customizable settings)
+// Creating the Connection Pool => https://resources.hexacluster.ai/blog/postgresql/postgresql-client-side-connection-pooling-in-golang-using-pgxpool/
 func Connect(databaseURL string) (*pgxpool.Pool, error) {
 
 	ctx := context.Background()

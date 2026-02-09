@@ -65,12 +65,17 @@ C:\Program Files\PostgreSQL\18\bin // 加到系統環境變數
 <!-- create config.go file -->
 NEW-ITEM -Path internal\config\config.go -ItemType File
 ```
+### 補充
+#### v5/pgxpool
+[Creating the Connection Pool](https://resources.hexacluster.ai/blog/postgresql/postgresql-client-side-connection-pooling-in-golang-using-pgxpool/
+)
 
-#### golang air補充
+#### golang air
 ```
 // 因為本專案的main.go在cmd路徑裡
 .air.toml 裡面的 cmd 加上 ./cmd/api // cmd = "go build -o ./tmp/main.exe ./cmd/api" 
 ```
+
 
 
 ```
