@@ -12,6 +12,9 @@ type Config struct {
 	Port        string
 }
 
+/*
+make api call to database
+*/
 // pointer : point to the address or instance in memory
 func Load() (*Config, error) {
 	// loads .env from the current directory
@@ -20,7 +23,7 @@ func Load() (*Config, error) {
 		log.Fatal("Error loading .env file")
 	}
 
-	/* *pointer (point to a struct) = &reference{} => https://stackoverflow.com/questions/47296325/passing-by-reference-and-value-in-go-to-functions
+	/* *pointer (point to a struct) = &reference{} (reference to a struct as value) => https://stackoverflow.com/questions/47296325/passing-by-reference-and-value-in-go-to-functions
 		func someFunc(x *int) {
 	    *x = 2 // Whatever variable caller passed in will now be 2
 	    y := 7

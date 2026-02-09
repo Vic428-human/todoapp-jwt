@@ -63,6 +63,7 @@ C:\Program Files\PostgreSQL\18\bin // 加到系統環境變數
 \q // quit connect 
 
 <!-- create config.go file -->
+NEW-ITEM -Path internal\config\config.go -ItemType File
 ```
 
 #### golang air補充
