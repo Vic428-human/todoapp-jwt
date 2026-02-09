@@ -38,16 +38,10 @@ func CreateProduct(pool *pgxpool.Pool, ownerId string, title string, game string
 	}
 
 	query := `
-        INSERT INTO items (
-            owner_id, title, game, platform, username,
-            views, monthly_views, price, description,
-            verified, country, featured, created_at, updated_at
-        )
-        VALUES ($1, $2, $3, $4, $5,
-                $6, $7, $8, $9,
-                $10, $11, $12, $13, $14)
-        RETURNING id
-    `
+		INSERT INTO products (owner_id, title, game, platform, username, views, monthly_views, price, description, verified, country, featured, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		RETURNING id
+	`
 
 	err := pool.QueryRow(ctx, query,
 		item.OwnerID,
@@ -67,7 +61,7 @@ func CreateProduct(pool *pgxpool.Pool, ownerId string, title string, game string
 	).Scan(&item.ID)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert item: %w", err)
+		return nil, fmt.Errorf("failed to insert product: %w", err)
 	}
 
 	return item, nil
