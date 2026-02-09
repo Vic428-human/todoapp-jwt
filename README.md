@@ -5,6 +5,8 @@
 ### 專案規劃流程 
 - 下載所需套件
 - 新專案要加資料表 (基於 mirgration 的方式添加)
+- Handler
+- Repository
 
 #### 下載所需套件
 > 套件、DB安裝
@@ -85,11 +87,16 @@ NEW-ITEM -Path internal\config\config.go -ItemType File // create config.go file
 ```
 
 #### Handler 
-> 套件、DB安裝、migration 操作，都有了之後才處裡Handler環節
-request handler >　request repository layer (model : it's a blue print for our data, specify what kind of data add in our db)
+- Handler 層用途 
+> Handler 負責處理 HTTP 請求，執行業務邏輯（不涉及資料庫操作），接收請求、驗證參數、調用 Repository，然後回傳結果
+
+#### Repository 
+- Repository 層用途 
+> Repository 封裝 SQL 查詢，負責與資料庫互動（新增、修改、查詢等），讓 Handler 只需調用簡單介面，避免直接寫 SQL。
+
 
 #### auth middleware jwt validation
-> API都規劃完成之後才處理
+> API都規劃完成之後才處理,
 
 ### 補充
 #### v5/pgxpool
@@ -114,9 +121,9 @@ yourproject/
 │ └── database/    // Creating the Connection and Pooling for postgres
 │ └── config/    // handling our http request
 │ └── middleware/    // use for authentication
-│ └── models/    // this going to provide structure of data 
-│ └── repository/    // all of database operations
-│
+│ └── models/    // 定義資料結構
+│ └── repository/    // 封裝 SQL 查詢，負責與資料庫互動（新增、修改、查詢等，存取資料
+│ └── handlers/ // HTTP API
 ├── scripts/ 
 │ └── migrate.ps1/ //  把 powershell 寫成腳本，避免每次運行都寫一堆指令
 │

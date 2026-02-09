@@ -7,7 +7,7 @@ import (
 	"todo_api/internal/database"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool" // PostgreSQL驅動程式的connection pool版本，提供高效連線管理
 )
 
 func main() {
@@ -18,14 +18,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	var pool *pgxpool.Pool
-	pool, err = database.Connect(cfg.DatabaseURL) // 建立連線字串
+
+	// 建立連線字串
+	pool, err = database.Connect(cfg.DatabaseURL)
 	if err != nil {
+		// 連線失敗時立即終止程式
 		log.Fatal(err)
 	}
 
-	defer pool.Close()
+	defer pool.Close() // 確保程式結束時關閉連線池
 
 	// create server, take a look at routes, want api fast, use instance from the memory, pointer variable
 	// * is a pointer, reference something in the memory

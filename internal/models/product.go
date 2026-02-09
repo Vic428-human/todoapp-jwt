@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type Item struct {
+type Product struct {
 	ID           int       `json:"id" db:"id"`
 	OwnerID      string    `json:"ownerId" db:"owner_id"`
 	Title        string    `json:"title" db:"title"`
