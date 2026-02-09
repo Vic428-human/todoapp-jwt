@@ -38,7 +38,7 @@ go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@lat
 // migration is like version control for db, every single table, we have two migrations 1.up migration and 2. down migration 
 
 <!-- 在 migrations 資料夾中建立一組用 SQL 撰寫、用遞增編號命名的「建立 todos 資料表」migration 檔案。 -->
-migrate create -ext sql -dir migrations -seq create_todos_table // 用途:新專案要加資料表、修改 schema（加欄位、改型別）、團隊合作時，讓大家資料庫版本一致
+migrate create -ext sql -dir migrations -seq create_todos_table // 用途: 新專案要加資料表、修改 schema（加欄位、改型別）、團隊合作時，讓大家資料庫版本一致
 
 <!-- generates a bcrypt hash of a given password -->
 // https://pkg.go.dev/golang.org/x/crypto/bcrypt
@@ -82,19 +82,23 @@ NEW-ITEM -Path internal\config\config.go -ItemType File
 ```
 
 
-
+### 專案架構
 ```
 yourproject/
 ├── go.mod
 ├── cmd/  reponsible forrunning database
 │
-├── internal/   
-│ └── config/    // set enviroment
-│ └── database/    // database connection setup and pooling 
+├── internal/ 
+│ └── config/  引用環境變數 
+│ └── database/    // Creating the Connection and Pooling for postgres
 │ └── config/    // handling our http request
 │ └── middleware/    // use for authentication
 │ └── models/    // this going to provide structure of data 
 │ └── repository/    // all of database operations
-├── internal/
+│
+├── scripts/ 
+│ └── migrate.ps1/ //  把 powershell 寫成腳本，避免每次運行都寫一堆指令
+│
+├── migrations/  // migrate create -ext sql -dir migrations -seq create_todos_table 用途: 新專案要加資料表、修改 schema（加欄位、改型別）、團隊合作時，讓大家資料庫版本一致
 └── frontend/ 預期放登入註冊畫面
 ```
