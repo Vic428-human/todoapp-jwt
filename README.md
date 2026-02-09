@@ -86,6 +86,7 @@ NEW-ITEM -Path internal\config\config.go -ItemType File // create config.go file
 
 #### Handler 
 > 套件、DB安裝、migration 操作，都有了之後才處裡Handler環節
+request handler >　request repository layer (model : it's a blue print for our data, specify what kind of data add in our db)
 
 #### auth middleware jwt validation
 > API都規劃完成之後才處理
