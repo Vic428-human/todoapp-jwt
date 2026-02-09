@@ -6,7 +6,7 @@ import (
 	"time"
 	"todo_api/internal/models"
 
-	"github.com/jackc/pgx/v5/pgxpool" // PostgreSQL驅動程式的connection pool版本，提供高效連線管理
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // 建立物件 → 寫入資料庫 → 回傳完整物件

@@ -29,7 +29,7 @@ go get -u github.com/gin-gonic/gin // 處理 http requests
 <!-- 下載 postgres's driver -->
 // https://github.com/jackc/pgx/blob/f56ca73076f3fc935a2a049cf78993bfcbba8f68/examples/url_shortener/main.go#L11
 go get -u github.com/jackc/pgx/v5 
-go get -u github.com/jackc/pgx/v5/pgxpool // for a concurrency safe connection pool
+go get -u github.com/jackc/pgx/v5/pgxpool // PostgreSQL驅動程式的connection pool版本，提供高效連線管理
 
 /*
 為何選擇Migrate庫 https://github.com/golang-migrate/migrate/tree/master/database/postgres
