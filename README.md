@@ -34,7 +34,7 @@ go get -u github.com/jackc/pgx/v5/pgxpool //for a concurrency safe connection po
 易於整合和擴展: 作為一個Go庫，Migrate可以輕鬆整合到Go應用程式中。它也支援透過插件來擴展更多的資料庫類型或自訂遷移邏輯。
 */
 // https://github.com/golang-migrate/migrate/tree/master/database/postgres
-go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+go install -tags 'postgres' github.com/golang-migrate/migrate//cmd/migrate@latest
 
 <!-- generates a bcrypt hash of a given password -->
 // https://pkg.go.dev/golang.org/x/crypto/bcrypt

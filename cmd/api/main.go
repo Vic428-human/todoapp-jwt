@@ -7,16 +7,8 @@ import (
 	"todo_api/internal/database"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-type DBConfig struct {
-	UserName string
-	Password string
-	Host     string
-	Port     int
-	DBName   string
-}
 
 func main() {
 	var cfg *config.Config
