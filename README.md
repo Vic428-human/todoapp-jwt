@@ -2,74 +2,94 @@
 > 這個專案主要用於理解 JWT + GIN + GOLANG + PostgreSQL 規劃登入註冊功能，完成後會把它遷移過去跟交易所的登入功能做整合
 
 
-####  本專案用到的dependencies
-> 來源跟用途說明
+### 專案規劃流程 
+- 下載所需套件
+- 新專案要加資料表 (基於 mirgration 的方式添加)
+
+#### 下載所需套件
+> 套件、DB安裝
 
 ```
 <!-- 快速生成檔案 -->
 mkdir cmd\api internal\config,internal\database,internal\handlers,internal\middleware,internal\models,internal\repository,migrations
 
 <!-- initialize the project -->
-go mod init todo_api
+go mod init todo_api // go.mod會出現 module todo_api
 
 <!-- run this project -->
-go run cmd\api\main.go
+go run cmd\api\main.go // 主程式入口點
 
-<!-- setup dependencies -->
-// handle our http requests 
+<!-- setup dependencies :　本專案會需要用的的套件及其用途 -->
+
 // https://ithelp.ithome.com.tw/articles/10387192
-go get -u github.com/gin-gonic/gin
+go get -u github.com/gin-gonic/gin // 處理 http requests 
 
-<!-- install postgres's driver -->
+<!-- 下載 postgres's driver -->
 // https://github.com/jackc/pgx/blob/f56ca73076f3fc935a2a049cf78993bfcbba8f68/examples/url_shortener/main.go#L11
 go get -u github.com/jackc/pgx/v5 
-go get -u github.com/jackc/pgx/v5/pgxpool //for a concurrency safe connection pool
+go get -u github.com/jackc/pgx/v5/pgxpool // for a concurrency safe connection pool
 
-<!-- install jwt for authentication -->
 /*
-為何選擇Migrate庫
+為何選擇Migrate庫 https://github.com/golang-migrate/migrate/tree/master/database/postgres
 版本控制和可追溯性: Migrate庫提供了一種簡潔的方式來版本化資料庫結構的改變。每個遷移都被保存為一個單獨的檔案，檔名通常包含時間戳和描述，這使得追蹤和審計資料庫結構的變更變得簡單直觀。這與手動管理一系列.sql腳本檔案相比，更加系統化和易於維護。
 自動化操作: 使用Migrate庫可以實現遷移操作的自動化，如自動執行下一個未應用的遷移或回滾到特定版本。這種自動化大大降低了人為錯誤的風險，並提高了開發和部署的效率。
 跨資料庫相容性: Migrate支援廣泛的資料庫技術，這意味著同一套遷移腳本可以用於不同的資料庫系統，從而簡化了多環境或多資料庫系統的遷移策略。
 易於整合和擴展: 作為一個Go庫，Migrate可以輕鬆整合到Go應用程式中。它也支援透過插件來擴展更多的資料庫類型或自訂遷移邏輯。
 */
-// https://github.com/golang-migrate/migrate/tree/master/database/postgres
 go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-// migration is like version control for db, every single table, we have two migrations 1.up migration and 2. down migration 
-
-<!-- 在 migrations 資料夾中建立一組用 SQL 撰寫、用遞增編號命名的「建立 todos 資料表」migration 檔案。 -->
-migrate create -ext sql -dir migrations -seq create_todos_table // 用途: 新專案要加資料表、修改 schema（加欄位、改型別）、團隊合作時，讓大家資料庫版本一致
 
 <!-- generates a bcrypt hash of a given password -->
-// https://pkg.go.dev/golang.org/x/crypto/bcrypt
-go get -u golang.org/x/crypto/bcrypt  
+go get -u golang.org/x/crypto/bcrypt  // https://pkg.go.dev/golang.org/x/crypto/bcrypt
 
 <!--  read environment variables in golang -->
-// https://github.com/joho/godotenv
-go get -u github.com/joho/godotenv 
+go get -u github.com/joho/godotenv  // https://github.com/joho/godotenv
 
 <!-- 熱重載工具，作用是在你修改代碼文件後自動重新編譯並重啟程序 -->
-// https://www.bilibili.com/opus/1068145464453365769 => 有詳細步驟
 go install github.com/cosmtrek/air@latest // 路徑已經改成下方這個
-go install github.com/air-verse/air@latest
+go install github.com/air-verse/air@latest // https://www.bilibili.com/opus/1068145464453365769 => 有詳細步驟
 
 <!-- install postgres  5432 port , 密碼:提示結婚 (安裝時的設定)-->
 psql --version // 確認是否下載
 psql -U postgres // 指定以 postgres 用户身份連接數據庫，如果失敗改用 psql -U z0983 ，電腦名稱是 z0983。
+```
 
+#### 新專案要加資料表
+> migration 操作
+
+```
+<!-- 新專案要加資料表、修改 schema（加欄位、改型別）、團隊合作時，讓大家資料庫版本一致時都會需要用的 -->
+migrate create -ext sql -dir migrations -seq create_todos_table //  在 migrations 資料夾中建立一組用 SQL 撰寫、用遞增編號命名的「建立 todos 資料表」 分別為 1.up migration  2. down migration  檔案。
+
+igrate.ps1 up //  先在 XXX_create_todos_table 裡面寫好sql語法創建table，接者操作 .\scripts\migrate.ps1 up 建立資料表
+
+<!-- 下方是常見的db操作 -->
 \l // look at database, show us all of db, 正常會出現 postgres、template0、template1
+
 CREATE DARABSE XXX; // write sql query in uppercase
 
 rmdir /S /Q "C:\Program Files\PostgreSQL" // 安裝失敗的時候強制刪除 
+
 C:\Program Files\PostgreSQL\18\bin // 加到系統環境變數
+
 介紹 pgAdmin UI介面用法 // https://www.youtube.com/watch?v=T1PrXly6kOs
+
 \c todo_api // connected to database
+
 \q // quit connect 
+
 psql -U postgres -d todo_api // connet to certain db
+
 \dt // find table 
-<!-- create config.go file -->
-NEW-ITEM -Path internal\config\config.go -ItemType File
+
+NEW-ITEM -Path internal\config\config.go -ItemType File // create config.go file 
 ```
+
+#### Handler 
+> 套件、DB安裝、migration 操作，都有了之後才處裡Handler環節
+
+#### auth middleware jwt validation
+> API都規劃完成之後才處理
+
 ### 補充
 #### v5/pgxpool
 [Creating the Connection Pool](https://resources.hexacluster.ai/blog/postgresql/postgresql-client-side-connection-pooling-in-golang-using-pgxpool/
@@ -82,7 +102,7 @@ NEW-ITEM -Path internal\config\config.go -ItemType File
 ```
 
 
-### 專案架構
+### 專案架構 
 ```
 yourproject/
 ├── go.mod

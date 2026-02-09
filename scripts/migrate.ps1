@@ -9,7 +9,7 @@
 #避免每次手打一長串參數
 
 # 套用 migration
-# .\scripts\migrate.psl force up 
+# .\scripts\migrate.ps1 up 
 
 # 回滾 1 個（預設）
 #.\migrate.ps1 down
