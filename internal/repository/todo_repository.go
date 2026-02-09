@@ -14,20 +14,20 @@ func CreateTodo(pool *pgxpool.Pool, title string, completed bool) (*models.Todo,
 	// 建立帶有背景上下文的連線池
 	var ctx context.Context
 	var cancel context.CancelFunc
-	// 保護查詢不會無限等待，只等5秒
+	// 帶有 5 秒 timeout 的 context，避免查詢卡住。
 	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel() // Always cancel to release resources
 
-	// 建立待辦事項
-	todo := &models.Todo{Title: title, Completed: completed, CreatedAt: time.Now(), UpdatedAt: time.Now()}
+	query := `INSERT INTO todos (title, completed) VALUES ($1, $2) RETURNING id, title, completed, created_at, updated_at`
 
-	// 執行 SQL 插入語句，RETURNING id 以取得主鍵
-	query := `INSERT INTO todos (title, completed, created_at, updated_at) VALUES ($1, $2, $3, $4) RETURNING id `
-	// 使用 QueryRow(...).Scan(...) 來取得 RETURNING id，確保 todo.ID 被正確填入
-	err := pool.QueryRow(ctx, query, todo.Title, todo.Completed, todo.CreatedAt, todo.UpdatedAt).Scan(&todo.ID)
+	var todo models.Todo
+	// 後面傳入的參數 (todo.Title, todo.Completed, todo.CreatedAt, todo.UpdatedAt) 會對應到 SQL 裡的 $1, $2, ... 佔位符。
+	// Scan(...) 會把查詢結果的欄位值依序填入 todo.ID, todo.Title, todo.Completed, todo.CreatedAt, todo.UpdatedAt。
+	err := pool.QueryRow(ctx, query, todo.Title, todo.Completed).Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt, &todo.UpdatedAt)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert todo: %w", err)
 	}
 
-	return todo, nil
+	return &todo, nil
 }
