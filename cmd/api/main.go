@@ -20,7 +20,7 @@ func main() {
 	}
 	var pool *pgxpool.Pool
 
-	// 建立連線字串
+	// 1️⃣ 應用啟動時：只建立「一次」連線池（生命週期 = 整個應用）
 	pool, err = database.Connect(cfg.DatabaseURL)
 	if err != nil {
 		// 連線失敗時立即終止程式
@@ -33,6 +33,9 @@ func main() {
 	// * is a pointer, reference something in the memory
 	// pointer refers to the address or instance in memory, and not copy entire thing
 	var router *gin.Engine = gin.Default() // gin => do client request and response
+	// router.POST("/todos", createTodoHandler(pool)) // ✅ 共用同一個 pool
+
+	// 2️⃣ 將「同一個」pool 實例傳給所有 handler
 	router.GET("/", func(c *gin.Context) {
 		router.SetTrustedProxies(nil) // if you don't use any proxy, you can disable this feature by using nil, then Context.ClientIP() will return the remote address directly to avoid some unnecessary computation
 
