@@ -5,6 +5,7 @@ import (
 	"log"
 	"todo_api/internal/config"
 	"todo_api/internal/database"
+	"todo_api/internal/handlers"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool" // PostgreSQL驅動程式的connection pool版本，提供高效連線管理
@@ -33,12 +34,10 @@ func main() {
 	// * is a pointer, reference something in the memory
 	// pointer refers to the address or instance in memory, and not copy entire thing
 	var router *gin.Engine = gin.Default() // gin => do client request and response
-	// router.POST("/todos", createTodoHandler(pool)) // ✅ 共用同一個 pool
 
 	// 2️⃣ 將「同一個」pool 實例傳給所有 handler
 	router.GET("/", func(c *gin.Context) {
 		router.SetTrustedProxies(nil) // if you don't use any proxy, you can disable this feature by using nil, then Context.ClientIP() will return the remote address directly to avoid some unnecessary computation
-
 		// gin.H is a shortcut for map[string]interface{} or map[string]any
 		c.JSON(200, gin.H{
 			"message":  "!!!todo api running successfully~~~",
@@ -46,6 +45,13 @@ func main() {
 			"database": "connected",
 		})
 	})
+
+	// 當前專案會用到
+	router.POST("/todos", handlers.CreateTodoHandler(pool))
+
+	// 交易所才會用到，只是在這進行測試
+	router.POST("/products", handlers.CreatteProductHandler(pool))
+
 	router.Run(":" + cfg.Port) // listens on 0.0.0.0:8080 by default
 
 }

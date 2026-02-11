@@ -18,9 +18,11 @@ type CreateProductRequest struct {
 	MonthlyViews int    `json:"monthly_views" binding:"required"`
 	Price        int    `json:"price" binding:"required"`
 	Description  string `json:"description" binding:"required"`
-	Verified     bool   `json:"verified" binding:"required"`
-	Country      string `json:"country" binding:"required"`
-	Featured     bool   `json:"featured" binding:"required"`
+	// TODO: 以正常管道註冊的是驗證用戶，如果使開發人員發的帳號就屬於非驗證用戶
+	Verified bool   `json:"verified" binding:"required"`
+	Country  string `json:"country" binding:"required"`
+	// 熱播推薦
+	Featured bool `json:"featured" binding:"required"` // 這個欄位必須存在 而且必須是 true，所以如果傳 false，等於是0值，就不會通過required的驗證
 }
 
 func CreatteProductHandler(pool *pgxpool.Pool) gin.HandlerFunc {

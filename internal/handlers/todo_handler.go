@@ -14,7 +14,7 @@ type CreateTodoRequest struct {
 }
 
 func CreateTodoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
-	return func(c *gin.Context) {
+	return func(c *gin.Context) { // 閉包
 		var input CreateTodoRequest
 
 		//  先驗證從 client 傳來的資料
