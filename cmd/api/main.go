@@ -48,9 +48,11 @@ func main() {
 
 	// 當前專案會用到
 	router.POST("/todos", handlers.CreateTodoHandler(pool))
+	router.GET("/todos", handlers.GetAllTodosHandler(pool))
 
 	// 交易所才會用到，只是在這進行測試
 	router.POST("/products", handlers.CreatteProductHandler(pool))
+	router.GET("/products", handlers.GetAllProductsHandler(pool))
 
 	router.Run(":" + cfg.Port) // listens on 0.0.0.0:8080 by default
 

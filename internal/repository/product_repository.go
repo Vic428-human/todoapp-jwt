@@ -56,3 +56,55 @@ func CreateProduct(pool *pgxpool.Pool, ownerId string, title string, game string
 
 	return &product, nil
 }
+
+/* 獲得所有刊登商品，但熱推優先顯示 */
+func GetAllProducts(pool *pgxpool.Pool) ([]models.Product, error) {
+	var ctx context.Context
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var products []models.Product
+	// featured 熱推商品
+	// true (1) 排在 false (0) 前面
+	// 相同 featured 的產品，按建立時間由新至舊排序
+	// 效果 : featured 為ture 會排在最前面，即使刊登時間不是最新，也會排在最前面，然後再從熱推當中時間最新的在最前面
+	// 第二順位才是 featured是 false (非熱推) 進行排序，但一樣是 非熱推中最新的擺最前面
+	query := `
+		SELECT id, owner_id, title, game, platform, username, views, monthly_views, price, description, verified, country, featured, created_at, updated_at
+		FROM products
+		ORDER BY featured DESC, created_at DESC
+	`
+
+	rows, err := pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query products: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var product models.Product
+		if err := rows.Scan(
+			&product.ID,
+			&product.OwnerID,
+			&product.Title,
+			&product.Game,
+			&product.Platform,
+			&product.Username,
+			&product.Views,
+			&product.MonthlyViews,
+			&product.Price,
+			&product.Description,
+			&product.Verified,
+			&product.Country,
+			&product.Featured,
+			&product.CreatedAt,
+			&product.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan product: %w", err)
+		}
+		products = append(products, product)
+	}
+
+	return products, nil
+}

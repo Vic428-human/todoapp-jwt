@@ -22,7 +22,7 @@ type CreateProductRequest struct {
 	Verified bool   `json:"verified" binding:"required"`
 	Country  string `json:"country" binding:"required"`
 	// 熱播推薦
-	Featured bool `json:"featured" binding:"required"` // 這個欄位必須存在 而且必須是 true，所以如果傳 false，等於是0值，就不會通過required的驗證
+	Featured bool `json:"featured"`
 }
 
 func CreatteProductHandler(pool *pgxpool.Pool) gin.HandlerFunc {
@@ -44,5 +44,15 @@ func CreatteProductHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 
 		// 資料庫寫入正確後，回傳訊息到 client 端
 		c.JSON(http.StatusCreated, proudct)
+	}
+}
+
+func GetAllProductsHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		products, err := repository.GetAllProducts(pool)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		c.JSON(http.StatusOK, products)
 	}
 }
