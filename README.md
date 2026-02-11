@@ -131,3 +131,7 @@ yourproject/
 ├── migrations/  // migrate create -ext sql -dir migrations -seq create_todos_table 用途: 新專案要加資料表、修改 schema（加欄位、改型別）、團隊合作時，讓大家資料庫版本一致
 └── frontend/ 預期放登入註冊畫面
 ```
+
+### 知識點
+
+- [Basic Timeout with Context](https://go-cookbook.com/snippets/context/using-context-for-timeouts)
