@@ -1,3 +1,4 @@
+-- 資料表的欄位名稱 title, completed ...等
 CREATE TABLE IF NOT EXISTS todos (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,

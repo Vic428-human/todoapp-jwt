@@ -23,7 +23,7 @@ func CreateTodoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 
-		// 沒問題後，把資料傳給 repo層，透過sql方式把資料寫入到DB
+		// 沒問題後，把資料傳給 repository 層，透過 sql 方式把資料寫入到DB
 		todo, err := repository.CreateTodo(pool, input.Title, input.Completed)
 
 		if err != nil {

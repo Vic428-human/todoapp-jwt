@@ -1,9 +1,20 @@
 package models
 
-import (
-	"time"
-)
+import "time"
 
+/*
+前端收到：
+{
+  "id": 123,
+  "ownerId": "owner001"   ← 前端看到的 JSON
+}
+
+資料庫儲存：
+id = 123
+owner_id = "owner001"    ← DB 看到的欄位名
+*/
+// json 對應前端 API
+// db 對應資料庫表格中的
 type Product struct {
 	ID           int       `json:"id" db:"id"`
 	OwnerID      string    `json:"ownerId" db:"owner_id"`

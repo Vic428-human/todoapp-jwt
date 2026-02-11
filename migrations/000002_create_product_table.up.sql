@@ -1,3 +1,4 @@
+-- 資料表的欄位名稱 owner_id, title, game, platform, username, views, monthly_views, price, description, verified, country, featured ...等
 CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     owner_id VARCHAR(50) NOT NULL,
