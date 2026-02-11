@@ -16,8 +16,9 @@ type CreateTodoRequest struct {
 }
 
 type UpdateTodoRequest struct {
-	Title string `json:"title"`
-	// 需要把 Completed 定義成 指標型別，才可以和 nil 比較。
+	Title *string `json:"title"`
+	// bool 零值是 false => 如果請求中沒有 "completed" 欄位，仍然會設為 false
+	// *bool 零值是 nil => 如果請求中沒有 "completed" 欄位，仍然會設為 nil (優勢：能區分「未提供」、「true」、「false」三種狀態)
 	Completed *bool `json:"completed"`
 }
 
@@ -106,7 +107,8 @@ func UpdateToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 		// Go 裡只有指標、slice、map、interface、channel、function 這些類型可以和 nil 比較。
-		if input.Title == "" && input.Completed == nil {
+		// 如果要跟 nil 比較，只能將類型改成指標 (優勢：能區分「未提供」、「true」、「false」三種狀態)
+		if input.Title == nil || input.Completed == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "title or completed is required"})
 			return
 		}
@@ -117,7 +119,7 @@ func UpdateToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			completed = *input.Completed
 		}
 
-		todo, err := repository.UpdateTodo(pool, id, input.Title, completed)
+		todo, err := repository.UpdateTodo(pool, id, *input.Title, completed)
 		if err != nil {
 			if err == pgx.ErrNoRows {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "todo not found"})
