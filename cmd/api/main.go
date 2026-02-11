@@ -40,7 +40,7 @@ func main() {
 		router.SetTrustedProxies(nil) // if you don't use any proxy, you can disable this feature by using nil, then Context.ClientIP() will return the remote address directly to avoid some unnecessary computation
 		// gin.H is a shortcut for map[string]interface{} or map[string]any
 		c.JSON(200, gin.H{
-			"message":  "!!!todo api running successfully~~~",
+			"message":  "todo api running successfully",
 			"status":   "success",
 			"database": "connected",
 		})
@@ -50,6 +50,7 @@ func main() {
 	router.POST("/todos", handlers.CreateTodoHandler(pool))
 	router.GET("/todos", handlers.GetAllTodosHandler(pool))
 	router.GET("/todos/:id", handlers.GetTodoByIDHandler(pool))
+	router.PUT("/todos/:id", handlers.UpdateToDoHandler(pool))
 
 	// 交易所才會用到，只是在這進行測試
 	router.POST("/products", handlers.CreatteProductHandler(pool))

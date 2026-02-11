@@ -116,3 +116,30 @@ func GetTodoByID(pool *pgxpool.Pool, id int) (*models.Todo, error) {
 
 	return &todo, nil
 }
+
+func UpdateTodo(pool *pgxpool.Pool, id int, title string, completed bool) (*models.Todo, error) {
+	// 建立帶有背景上下文的連線池
+	var ctx context.Context
+	var cancel context.CancelFunc
+	// 資料庫查詢超時，超過5秒算超時
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel() // 釋放記憶
+
+	// 在資料表名稱 todos 中，對 表 的欄位新增一筆資料
+	var query string = `
+		UPDATE todos
+		SET title = $1, completed = $2, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $3
+		RETURNING id, title, completed, created_at, updated_at
+	`
+
+	var todo models.Todo
+	// 其實是在做「執行 SQL（只拿一筆結果）→ 把回傳欄位塞進 todo 這個 struct」
+	err := pool.QueryRow(ctx, query, title, completed, id).Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt, &todo.UpdatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &todo, nil
+}
