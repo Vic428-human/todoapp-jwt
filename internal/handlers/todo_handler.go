@@ -113,6 +113,21 @@ func UpdateToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 
+		existing, err := repository.GetTodoByID(pool, id)
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				c.JSON(http.StatusNotFound, gin.H{"error": "todo not found"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		// 判斷前端傳來的修改內容，跟先前DB的內容是否一樣
+		if existing.Title == *input.Title && existing.Completed == *input.Completed {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "todo has not been changed"})
+			return
+		}
+
 		var completed bool
 		// 檢查 Completed 是否為 true or false
 		if input.Completed != nil && *input.Completed {
