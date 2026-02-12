@@ -28,6 +28,40 @@ type CreateProductRequest struct {
 	Featured bool `json:"featured"`
 }
 
+type UpdateProductRequest struct {
+	Title *string `json:"title"`
+	// Game  *string `json:"game"` 編輯刊登商品不會同時修改到遊戲，不然你賣太陽神頭盔明明只會出現在ro，卻被你改去天堂，就不正常
+	// Platform *string `json:"platform"` // 編輯刊登商品不會同時修改到平台，因為這個是跟登入帳號時就連動的
+	Username *string `json:"username"` // 綁定帳號的預期只有 ownerId ，例如一個帳號就是一個 ownerId，但一個 ownerId 可以有很多角色名稱，若特定帳號有問題，直接從 ownerId 去調資料就好
+	// Views        *int    `json:"views"` 編輯刊登商品不會同時修改到觀看次數
+	// MonthlyViews *int    `json:"monthly_views"` 編輯刊登商品不會同時修改到月觀看次數
+	Price       *int    `json:"price"`
+	Description *string `json:"description"`
+	// Country     *string `json:"country"` 編輯刊登商品不會同時修改到國家，因為這個是跟登入帳號時就連動的
+}
+
+// 轉 map 的 helper
+func (r *UpdateProductRequest) ToUpdates() map[string]interface{} {
+	updates := make(map[string]interface{})
+	if r.Title != nil {
+		updates["title"] = *r.Title
+	}
+	// if r.Platform != nil {
+	// 	updates["platform"] = *r.Platform
+	// }
+	if r.Username != nil {
+		updates["username"] = *r.Username
+	}
+	if r.Price != nil {
+		updates["price"] = *r.Price
+	}
+	if r.Description != nil {
+		updates["description"] = *r.Description
+	}
+
+	return updates
+}
+
 func CreatteProductHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input CreateProductRequest
@@ -79,6 +113,7 @@ func GetProductByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	}
 }
 
+// TODO: 這個是搜尋關鍵字的名稱之後再改，有點容易混淆
 func ListProductsHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		keyword := c.Query("keyword")
@@ -93,5 +128,39 @@ func ListProductsHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, products)
+	}
+}
+
+func UpdateProductHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "INVALID PRODUCT ID"})
+			return
+		}
+
+		// 如果傳入已經被排除的欄位，代碼會自動忽略 ex:　http://localhost:3000/products/3
+		// 你預期修改的是 id=3，但卻同時想要修改 id成4，這不被允許，所以會排除這個寫入
+		var input UpdateProductRequest
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		// ✅ 轉成 map，只包含有值的欄位（真正的 PATCH）
+		updates := input.ToUpdates()
+		if len(updates) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no fields to update"})
+			return
+		}
+
+		// ✅ 呼叫新版 repository
+		updated, err := repository.UpdateProduct(pool, id, updates)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"data": updated})
 	}
 }

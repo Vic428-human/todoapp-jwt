@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 	"todo_api/internal/models" // 或 "github.com/gin-gonic/gin" 的 logger
 
@@ -203,4 +204,64 @@ func SearchProducts(pool *pgxpool.Pool, keyword string) ([]models.Product, error
 	}
 
 	return products, nil
+}
+
+// 可編輯欄位白名單（排除 id, owner_id, verified, featured, timestamps）
+var editableFields = []string{
+	"title", "game", "platform", "username",
+	"views", "monthly_views", "price", "description", "country",
+}
+
+// 更新商品內容
+// 解決痛點:
+// 1. 不限制前端更新那些欄位，之前的寫法是所有欄位的值都要提供給後端，現在是只提供需要更新的欄位。
+// 2. 那些不該被更改的內容，像是 ownerId 這種與帳號綁定的，如前端誤傳錯誤的值，後端這邊會擋掉。
+// 3. 在此處 ToUpdates 方法中，定義了那些欄位才能被更新，沒出現在這上面的都不能修改。
+func UpdateProduct(pool *pgxpool.Pool, id int, updates map[string]any) (*models.Product, error) {
+	var ctx context.Context
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// 建構動態 SET 子句
+	var setClauses []string
+	var args []any
+	argIndex := 1 // $1 給 WHERE id
+
+	for _, field := range editableFields {
+		if val, ok := updates[field]; ok && val != nil {
+			setClauses = append(setClauses, fmt.Sprintf("%s=$%d", field, argIndex+1))
+			args = append(args, val)
+			argIndex++
+		}
+	}
+
+	if len(setClauses) == 0 {
+		return nil, fmt.Errorf("no valid fields to update")
+	}
+
+	// 動態查詢（安全，參數化）
+	query := fmt.Sprintf(`
+        UPDATE products 
+        SET %s, updated_at = NOW()
+        WHERE id = $1
+        RETURNING id, owner_id, title, game, platform, username, views, monthly_views, 
+                  price, description, verified, country, featured, created_at, updated_at
+    `, strings.Join(setClauses, ", "))
+
+	args = append([]interface{}{id}, args...) // id 第一個
+
+	var updatedProduct models.Product
+	err := pool.QueryRow(ctx, query, args...).Scan(
+		&updatedProduct.ID, &updatedProduct.OwnerID, &updatedProduct.Title,
+		&updatedProduct.Game, &updatedProduct.Platform, &updatedProduct.Username,
+		&updatedProduct.Views, &updatedProduct.MonthlyViews, &updatedProduct.Price,
+		&updatedProduct.Description, &updatedProduct.Verified, &updatedProduct.Country,
+		&updatedProduct.Featured, &updatedProduct.CreatedAt, &updatedProduct.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to update product: %w", err)
+	}
+
+	return &updatedProduct, nil
 }
