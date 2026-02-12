@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"strconv"
 	"todo_api/internal/repository"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -52,6 +55,42 @@ func GetAllProductsHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		products, err := repository.GetAllProducts(pool)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		c.JSON(http.StatusOK, products)
+	}
+}
+
+func GetProductByIDHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "INVALID PRODUCT ID"})
+			return
+		}
+		product, err := repository.GetProductById(pool, id)
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "product not found"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		c.JSON(http.StatusOK, product)
+	}
+}
+
+func ListProductsHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		keyword := c.Query("keyword")
+		log.Printf("DEBUG: received keyword='%s'", keyword) // ← 加這行
+		if keyword == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "keyword required"})
+			return
+		}
+		products, err := repository.SearchProducts(pool, keyword)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 		c.JSON(http.StatusOK, products)
 	}

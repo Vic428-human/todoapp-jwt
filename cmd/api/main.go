@@ -54,7 +54,10 @@ func main() {
 
 	// 交易所才會用到，只是在這進行測試
 	router.POST("/products", handlers.CreatteProductHandler(pool))
-	router.GET("/products", handlers.GetAllProductsHandler(pool))
+	router.GET("/products", handlers.GetAllProductsHandler(pool)) // 無 keyword：全拿
+	router.GET("/products/:id", handlers.GetProductByIDHandler(pool))
+	// router 加這行（不碰現有）已經實驗過搜尋 "太陽神" 關鍵字會只拿到 太陽神有關的商品列表 => http://localhost:3000/products/search?keyword=太陽神
+	router.GET("/products/search", handlers.ListProductsHandler(pool))
 
 	router.Run(":" + cfg.Port) // listens on 0.0.0.0:8080 by default
 
