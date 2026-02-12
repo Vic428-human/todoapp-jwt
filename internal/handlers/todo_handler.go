@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"todo_api/internal/repository"
@@ -97,47 +99,44 @@ func UpdateToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "INVALID TODO ID"})
 			return
 		}
+
 		var input UpdateTodoRequest
 		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+		if input.Title == nil || input.Completed == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "title and completed are both required"})
 			return
 		}
-		// Go 裡只有指標、slice、map、interface、channel、function 這些類型可以和 nil 比較。
-		// 如果要跟 nil 比較，只能將類型改成指標 (優勢：能區分「未提供」、「true」、「false」三種狀態)
-		if input.Title == nil || input.Completed == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "title or completed is required"})
-			return
+
+		// 決定是否開啟測試模式
+		readonlyTest := c.Query("readonly_test") == "1"
+		if readonlyTest {
+			log.Printf("[TEST] Readonly test mode enabled for todo ID %d", id)
 		}
 
 		existing, err := repository.GetTodoByID(pool, id)
 		if err != nil {
-			if err == pgx.ErrNoRows {
+			if errors.Is(err, pgx.ErrNoRows) {
 				c.JSON(http.StatusNotFound, gin.H{"error": "todo not found"})
 				return
 			}
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		// 判斷前端傳來的修改內容，跟先前DB的內容是否一樣
+
 		if existing.Title == *input.Title && existing.Completed == *input.Completed {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "todo has not been changed"})
 			return
 		}
 
-		var completed bool
-		// 檢查 Completed 是否為 true or false
-		if input.Completed != nil && *input.Completed {
-			completed = *input.Completed
-		}
-
-		todo, err := repository.UpdateTodo(pool, id, *input.Title, completed)
+		// 傳入 readonlyTest 旗標
+		todo, err := repository.UpdateTodo(pool, id, *input.Title, *input.Completed, readonlyTest)
 		if err != nil {
-			if err == pgx.ErrNoRows {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "todo not found"})
+			if errors.Is(err, pgx.ErrNoRows) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "todo not found (concurrent deletion?)"})
 				return
 			}
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -145,6 +144,5 @@ func UpdateToDoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, todo)
-
 	}
 }

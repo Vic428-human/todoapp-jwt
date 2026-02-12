@@ -3,9 +3,12 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
 	"time"
 	"todo_api/internal/models"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -117,7 +120,106 @@ func GetTodoByID(pool *pgxpool.Pool, id int) (*models.Todo, error) {
 	return &todo, nil
 }
 
-func UpdateTodo(pool *pgxpool.Pool, id int, title string, completed bool) (*models.Todo, error) {
+// TODO:　這邊有模擬過 read-only 的情況，將來有機會再另外整理
+func UpdateTodo(pool *pgxpool.Pool, id int, title string, completed bool, readonlyTest bool) (*models.Todo, error) {
+	const maxRetries = 1
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		// 如果今天遇到突發狀況，不希望用戶對某一支特定API寫入資料，可以將該API設置為只讀模式，有可能是察覺有贓資料狀況發生，可以對
+		// 前端API多添加 http://localhost:3000/todos/2?readonly_test=1 這樣的模式，強制為只讀取模式
+		// ─── 測試專用：模擬 read-only ───────────────────────────────
+		if readonlyTest {
+			_, err := pool.Exec(ctx, "SET default_transaction_read_only = on")
+			if err != nil {
+				log.Printf("[TEST] Failed to set read-only: %v", err)
+			} else {
+				log.Printf("[TEST] Set default_transaction_read_only = on (attempt %d)", attempt+1)
+			}
+		}
+		// ──────────────────────────────────────────────────────────────
+
+		var query = `
+            UPDATE todos
+            SET title = $1, completed = $2, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+            RETURNING id, title, completed, created_at, updated_at
+        `
+
+		var todo models.Todo
+		err := pool.QueryRow(ctx, query, title, completed, id).Scan(
+			&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt, &todo.UpdatedAt,
+		)
+
+		if err == nil {
+			return &todo, nil
+		}
+
+		// 你的 read-only 偵測邏輯...
+		errStr := strings.ToLower(err.Error())
+		isReadOnly := strings.Contains(errStr, "read-only") ||
+			strings.Contains(errStr, "cannot execute") && strings.Contains(errStr, "read-only")
+
+		if isReadOnly && attempt < maxRetries {
+			log.Printf("偵測到 read-only 錯誤 (可能是 failover)，執行 pool.Reset() 並重試一次")
+			pool.Reset()
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		return nil, err
+	}
+
+	return nil, fmt.Errorf("超過重試次數")
+}
+
+// 更精確的 retry 判斷（可再擴充）
+func isRetryablePostgresError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := strings.ToLower(err.Error())
+
+	// 常見可重試錯誤關鍵字
+	if strings.Contains(errStr, "read-only") ||
+		strings.Contains(errStr, "cannot execute") && strings.Contains(errStr, "read-only") ||
+		strings.Contains(errStr, "connection reset") ||
+		strings.Contains(errStr, "connection refused") ||
+		strings.Contains(errStr, "no pg_hba.conf") || // 極端情況
+		strings.Contains(errStr, "tls") { // 某些 tls 重新交握失敗
+		return true
+	}
+
+	// 如果你用的是 pgx/v5，也可以檢查 pgconn 錯誤碼
+	if pgErr, ok := err.(*pgconn.PgError); ok {
+		switch pgErr.Code {
+		case "57P03", // cannot execute during recovery
+			"08006", // connection failure
+			"08001": // unable to connect
+			return true
+		}
+	}
+
+	return false
+}
+
+/*
+func (p *Pool) Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error) {
+	c, err := p.Acquire(ctx)  // 1. 從連接池獲取連接
+	if err != nil {
+		return pgconn.CommandTag{}, err
+	}
+	defer c.Release()         // 2. 執行完自動還回連接池
+
+	return c.Exec(ctx, sql, arguments...)  // 3. 執行SQL
+}
+
+*/
+
+func DeletTodo(pool *pgxpool.Pool, id int) error {
 	// 建立帶有背景上下文的連線池
 	var ctx context.Context
 	var cancel context.CancelFunc
@@ -127,19 +229,18 @@ func UpdateTodo(pool *pgxpool.Pool, id int, title string, completed bool) (*mode
 
 	// 在資料表名稱 todos 中，對 表 的欄位新增一筆資料
 	var query string = `
-		UPDATE todos
-		SET title = $1, completed = $2, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $3
-		RETURNING id, title, completed, created_at, updated_at
+		DELETE FROM todos
+		WHERE id = $1
 	`
 
-	var todo models.Todo
-	// 其實是在做「執行 SQL（只拿一筆結果）→ 把回傳欄位塞進 todo 這個 struct」
-	err := pool.QueryRow(ctx, query, title, completed, id).Scan(&todo.ID, &todo.Title, &todo.Completed, &todo.CreatedAt, &todo.UpdatedAt)
-
+	/* 搜關鍵字找得到 :　how to delete item in db by using pgxpool for golang range
+		deleteItem deletes a record from the "users" table by ID
+	func deleteItem(ctx context.Context, pool *pgxpool.Pool, id int) (int64, error) {
+		// Use Exec for non-SELECT queries
+		cmdTag, err := pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	*/
+	_, err := pool.Exec(ctx, query, id)
 	if err != nil {
-		return nil, err
 	}
-
-	return &todo, nil
+	return err
 }
