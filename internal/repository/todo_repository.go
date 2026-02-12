@@ -121,6 +121,18 @@ func GetTodoByID(pool *pgxpool.Pool, id int) (*models.Todo, error) {
 }
 
 // TODO:　這邊有模擬過 read-only 的情況，將來有機會再另外整理
+/*
+如果你還想進一步減少 call（可選加強）
+
+後端直接 403/429 回應
+當 read-only 開啟時，對寫入相關的 method（POST/PUT/PATCH/DELETE）直接回 403 Forbidden 或 429 Too Many Requests，並附上訊息「此功能暫時唯讀」。
+加上 rate limit 或 IP 暫時封鎖（進階）
+如果是特定異常狀況很嚴重，可以針對該 API 做更嚴格的限流。
+前端 + 後端雙重防護（推薦）
+前端 read-only 防一般使用者，後端 read-only 防繞過者，兩層都做最保險。
+
+目前這個做法已經很務實了，先把「資料不壞」守住是最重要的，其他 call 的問題相對次要（除非你已經看到有大量異常呼叫在打）。
+*/
 func UpdateTodo(pool *pgxpool.Pool, id int, title string, completed bool, readonlyTest bool) (*models.Todo, error) {
 	const maxRetries = 1
 
