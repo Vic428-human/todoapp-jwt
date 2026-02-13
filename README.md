@@ -140,8 +140,8 @@ yourproject/
 
 ### 比較這三個 Go Web 框架
 
-| 框架 | 特點 | 效能 | 學習曲線 | Express.js 相似度 |下載|
+| 框架 | 特點 | 效能 | Side Project 01 | Side Project 02|下載|
 |------|------|------|--------|------------------|------|
-| **Fiber** | 最像 Express.js，語法最接近 | 極高 | 低 | ⭐⭐⭐⭐⭐ |go get github.com/gofiber/fiber/v2|
-| **Gin** | 成熟穩定，生態系豐富 | 高 | 中 | ⭐⭐⭐⭐ |	"github.com/gin-gonic/gin"|
-| **Echo** | 功能完整，效能佳 | 高 | 中 | ⭐⭐⭐⭐ |尚未用過|
+| **Fiber** | 最像 Express.js，語法最接近 |  https://github.com/Vic428-human/todoapp-jwt | https://github.com/Vic428-human/go-pizza-order-tracker  |go get github.com/gofiber/fiber/v2|
+| **Gin** | 成熟穩定，生態系豐富 | 高 |  | |	"github.com/gin-gonic/gin"|
+| **Echo** | 功能完整，效能佳 | 高 | |  |尚未用過|
