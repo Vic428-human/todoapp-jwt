@@ -2,6 +2,8 @@
 
 ```bash
 go mod init <module_name>
+# 慣例，根據repo上的位置命名
+go mod init github.com/Vic428-human/fiber-go-todo
 ```
 
 -   `go mod init` is used to initialize a new module.

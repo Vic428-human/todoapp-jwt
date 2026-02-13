@@ -7,6 +7,7 @@ import (
 	"todo_api/internal/database"
 	"todo_api/internal/handlers"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool" // PostgreSQL驅動程式的connection pool版本，提供高效連線管理
 )
@@ -34,6 +35,12 @@ func main() {
 	// * is a pointer, reference something in the memory
 	// pointer refers to the address or instance in memory, and not copy entire thing
 	var router *gin.Engine = gin.Default() // gin => do client request and response
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://localhost:5175"},            // 加 []string{}
+		AllowHeaders: []string{"Origin", "Content-Type", "Accept"}, // Headers 也要是 slice
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	}))
 
 	// 2️⃣ 將「同一個」pool 實例傳給所有 handler
 	router.GET("/", func(c *gin.Context) {
