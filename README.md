@@ -1,6 +1,9 @@
 
 > 這個專案主要用於理解 JWT + GIN + GOLANG + PostgreSQL 規劃登入註冊功能，完成後會把它遷移過去跟交易所的登入功能做整合
 
+#### 0214 更新
+> 已經確定 [分支](https://github.com/Vic428-human/todoapp-jwt/tree/connect-react-and-golang-postgres) 實驗過，React + ts + react-query + postgres + go + gin，本地端已經串起來。
+> 所以接下來到交易所版本2 加入本專案的後端，然後實驗post API，補充，在交易所版本2中，會拔掉clerk。
 
 
 - [本專案學習過程中的筆記整理](https://www.notion.so/2-2f6a54651e3e80d888ede6403ad3bf6a)
