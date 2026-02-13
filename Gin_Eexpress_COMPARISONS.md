@@ -11,6 +11,7 @@ go get github.com/gin-gonic/gin
 
 ```go
 func main() {
+    cfg := loadConfig()
     // gin.Default()是對 gin.new() 的封装，加入了日誌和錯誤恢复中間件
     router := gin.Default()  
 
