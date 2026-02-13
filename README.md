@@ -142,6 +142,6 @@ yourproject/
 
 | 框架 | 特點 | 效能 | Side Project 01 | Side Project 02|下載|
 |------|------|------|--------|------------------|------|
-| **Fiber** | 最像 Express.js，語法最接近 |  https://github.com/Vic428-human/todoapp-jwt | https://github.com/Vic428-human/go-pizza-order-tracker  |go get github.com/gofiber/fiber/v2|
+| **Fiber** | 最像 Express.js，語法最接近 | 超高 | https://github.com/Vic428-human/todoapp-jwt | https://github.com/Vic428-human/go-pizza-order-tracker |go get github.com/gofiber/fiber/v2|
 | **Gin** | 成熟穩定，生態系豐富 | 高 |  | |	"github.com/gin-gonic/gin"|
 | **Echo** | 功能完整，效能佳 | 高 | |  |尚未用過|
