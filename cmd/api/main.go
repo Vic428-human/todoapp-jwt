@@ -52,6 +52,7 @@ func main() {
 	router.GET("/todos/:id", handlers.GetTodoByIDHandler(pool))
 	router.PUT("/todos/:id", handlers.UpdateToDoHandler(pool))
 	router.POST("/auth/register", handlers.CreateUserHandler(pool))
+	router.POST("/auth/login", handlers.LoginHandler(pool, cfg))
 
 	// 交易所才會用到，只是在這進行測試
 	router.POST("/products", handlers.CreatteProductHandler(pool))

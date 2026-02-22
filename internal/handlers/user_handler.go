@@ -9,6 +9,7 @@ import (
 	"todo_api/internal/repository"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -96,10 +97,26 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config) gin.HandlerFunc {
 
 		// map[string]interface{}{}
 		// map[string]any{}
-		claims := jwt.MapClaims{}
-		claims["user_id"] = user.ID
-		claims["email"] = user.Email
-		claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+		// claims := jwt.MapClaims{}
+		// claims["user_id"] = user.ID
+		// claims["email"] = user.Email
+		// claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+		// https://golang-jwt.github.io/jwt/usage/create/
+		// 刪掉 var block，直接用 :=
+		t := jwt.NewWithClaims(jwt.SigningMethodHS256, //
+			jwt.MapClaims{
+				"user_id": user.ID,
+				"email":   user.Email,
+				"exp":     time.Now().Add(24 * time.Hour).Unix(),
+			})
 
+		tokenString, err := t.SignedString([]byte(cfg.JWTSecret)) //  HMAC 的 byte secret，這邊用的不是 ES256
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, LoginResponse{Token: tokenString})
 	}
 }
