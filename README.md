@@ -66,7 +66,7 @@ psql -U postgres // 指定以 postgres 用户身份連接數據庫，如果失�
 <!-- 新增todos表或是XX表的時候都會需要操作 -->
 migrate create -ext sql -dir migrations -seq create_users_table // 會產出 1.up and down migration  檔案。
 
-igrate.ps1 up //  先在 XXX_create_todos_table 裡面寫好sql語法創建table，接者操作 .\scripts\migrate.ps1 up 建立資料表
+.\scripts\migrate.ps1 up //  先在 XXX_create_todos_table 裡面寫好sql語法創建table，接者操作 .\scripts\migrate.ps1 up 建立資料表
 
 <!-- 下方是常見的db操作 -->
 \l // look at database, show us all of db, 正常會出現 postgres、template0、template1
@@ -83,7 +83,7 @@ C:\Program Files\PostgreSQL\18\bin // 加到系統環境變數
 
 \q // quit connect 
 
-psql -U postgres -d todo_api // 本專案的table名稱 是todo_api，users的table還在規劃中，之後補上。
+psql -U postgres -d todo_api // 本專案的資料庫名稱是todo_api，搜尋後可以看到該專案有哪些表。
 
 \dt // find table 
 
