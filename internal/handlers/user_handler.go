@@ -96,7 +96,7 @@ func LoginHandler(pool *pgxpool.Pool, cfg *models.Config) gin.HandlerFunc {
 		// map[string]interface{}{}
 		// map[string]any{}
 		claims := jwt.MapClaims{}
-		claims["id"] = user.ID
+		claims["user_id"] = user.ID
 		claims["email"] = user.Email
 		claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
