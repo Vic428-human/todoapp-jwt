@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"todo_api/internal/config"
 	"todo_api/internal/models"
 	"todo_api/internal/repository"
 
@@ -67,7 +68,7 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	}
 }
 
-func LoginHandler(pool *pgxpool.Pool, cfg *models.Config) gin.HandlerFunc {
+func LoginHandler(pool *pgxpool.Pool, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var loginRequest LoginRequest
 
