@@ -10,6 +10,7 @@ import (
 type Config struct {
 	DatabaseURL string
 	Port        string
+	JWTSecret   string
 }
 
 /*
@@ -33,6 +34,7 @@ func Load() (*Config, error) {
 	var config *Config = &Config{
 		DatabaseURL: os.Getenv("POSTGRES_URL"),
 		Port:        os.Getenv("POSTGRES_PORT"),
+		JWTSecret:   os.Getenv("JWT_SECRET"),
 	}
 	return config, nil
 }

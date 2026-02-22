@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strings"
+	"time"
 	"todo_api/internal/models"
 	"todo_api/internal/repository"
 
@@ -14,6 +15,15 @@ import (
 type RegisterRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
 }
 
 func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
@@ -32,7 +42,7 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "password must be at least 6 characters long"})
 			return
 		}
-
+		// 把加鹽密碼存在db，但回傳的時候不要把密碼回傳給USER
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerRequest.Password), bcrypt.DefaultCost)
 
 		if err != nil {
@@ -54,5 +64,41 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusCreated, createdUser)
+	}
+}
+
+func LoginHandler(pool *pgxpool.Pool, cfg *models.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var loginRequest LoginRequest
+
+		if err := c.BindJSON(&loginRequest); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+
+		user, err := repository.GetUserByEmail(pool, loginRequest.Email)
+
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+			return
+		}
+		// 把存在db的加鹽密碼跟前端傳來的密碼比對
+		// 例如，db中的密碼是 $2a$10$uyx7Xo1MTx1OYiBC4Gs.qO5NdWt2Wt55bGVDz.oOSHPKij23vf.Ni 這是加鹽後的密碼
+		// uyx7Xo1MTx1OYiBC4Gs 就是加鹽本身，當使用者登入的時候，會拿 uyx7Xo1MTx1OYiBC4Gs 這段+使用者輸入的密碼進行加鹽，若加鹽後跟db的加鹽後一致，則等於密碼相同
+		// Authorization: 是賦予權限， Authentication是進行權限驗證
+		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginRequest.Password))
+
+		if err != nil {
+			// 密碼錯誤代表沒成功被賦予權限，所以失敗
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+			return
+		}
+
+		// map[string]interface{}{}
+		// map[string]any{}
+		claims := jwt.MapClaims{}
+		claims["id"] = user.ID
+		claims["email"] = user.Email
+		claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+
 	}
 }
