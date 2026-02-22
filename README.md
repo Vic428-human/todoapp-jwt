@@ -65,8 +65,8 @@ psql -U postgres // 指定以 postgres 用户身份連接數據庫，如果失�
 > migration 操作
 
 ```
-<!-- 新專案要加資料表、修改 schema（加欄位、改型別）、團隊合作時，讓大家資料庫版本一致時都會需要用的 -->
-migrate create -ext sql -dir migrations -seq create_todos_table //  在 migrations 資料夾中建立一組用 SQL 撰寫、用遞增編號命名的「建立 todos 資料表」 分別為 1.up migration  2. down migration  檔案。
+<!-- 新增todos表或是XX表的時候都會需要操作 -->
+migrate create -ext sql -dir migrations -seq create_users_table // 會產出 1.up and down migration  檔案。
 
 igrate.ps1 up //  先在 XXX_create_todos_table 裡面寫好sql語法創建table，接者操作 .\scripts\migrate.ps1 up 建立資料表
 
