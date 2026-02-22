@@ -1,10 +1,8 @@
 
-> 這個專案主要用於理解 JWT + GIN + GOLANG + PostgreSQL 規劃登入註冊功能，完成後會把它遷移過去跟交易所的登入功能做整合
+> 這個專案主要用於規劃 JWT + GIN + GOLANG + PostgreSQL 規劃登入、註冊功能，以及常規的API CRUD測試..等
 
-#### 0214 更新
-> 已經確定 [分支](https://github.com/Vic428-human/todoapp-jwt/tree/connect-react-and-golang-postgres) 實驗過，React + ts + react-query + postgres + go + gin，本地端已經串起來。
-> 所以接下來到交易所版本2 加入本專案的後端，然後實驗post API，補充，在交易所版本2中，會拔掉clerk。
-
+### TODOS:
+-  [進行中] 26/0222 目前正在規劃使用者登入功能，以及JWT等驗證規則
 
 - [本專案學習過程中的筆記整理](https://www.notion.so/2-2f6a54651e3e80d888ede6403ad3bf6a)
 
@@ -85,7 +83,7 @@ C:\Program Files\PostgreSQL\18\bin // 加到系統環境變數
 
 \q // quit connect 
 
-psql -U postgres -d todo_api // connet to certain db
+psql -U postgres -d todo_api // 本專案的table名稱 是todo_api，users的table還在規劃中，之後補上。
 
 \dt // find table 
 
