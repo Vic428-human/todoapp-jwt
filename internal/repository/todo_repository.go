@@ -7,22 +7,11 @@ import (
 	"strings"
 	"time"
 	"todo_api/internal/models"
+	"todo_api/internal/utils"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-// 超時檢查
-func performOperation(ctx context.Context) {
-	select {
-	// 5秒才超時，所以會顯示完成
-	case <-time.After(2 * time.Second):
-		fmt.Println("Operation completed")
-	// 如超時時間設定1秒，則會顯示超時
-	case <-ctx.Done():
-		fmt.Println("Operation timed out")
-	}
-}
 
 // repository層: 建立物件 → 寫入資料庫 → 回傳完整物件
 
@@ -31,11 +20,11 @@ func CreateTodo(pool *pgxpool.Pool, title string, completed bool) (*models.Todo,
 	// 建立帶有背景上下文的連線池
 	var ctx context.Context
 	var cancel context.CancelFunc
-	// 資料庫查詢超時，超過5秒算超時
-	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel() // 釋放記憶體
+	// every database operation requires a context
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second) // 資料庫查詢超時，超過5秒算超時
+	defer cancel()                                                         // 釋放記憶體
 
-	performOperation(ctx)
+	utils.PerformOperation(ctx)
 
 	// 在資料表名稱 todos 中，對 表 的欄位新增一筆資料
 	query := `INSERT INTO todos (title, completed) VALUES ($1, $2) RETURNING id, title, completed, created_at, updated_at`
@@ -61,7 +50,7 @@ func GetAllTodos(pool *pgxpool.Pool) ([]models.Todo, error) {
 	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel() // 釋放記憶
 
-	performOperation(ctx)
+	utils.PerformOperation(ctx)
 
 	// 在資料表名稱 todos 中，對 表 的欄位新增一筆資料
 	var query string = `
@@ -100,7 +89,7 @@ func GetTodoByID(pool *pgxpool.Pool, id int) (*models.Todo, error) {
 	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel() // 釋放記憶
 
-	performOperation(ctx)
+	utils.PerformOperation(ctx)
 
 	// 在資料表名稱 todos 中，對 表 的欄位新增一筆資料
 	var query string = `
