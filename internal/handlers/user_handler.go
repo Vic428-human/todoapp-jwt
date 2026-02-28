@@ -95,22 +95,15 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// map[string]interface{}{}
-		// map[string]any{}
-		// claims := jwt.MapClaims{}
-		// claims["user_id"] = user.ID
-		// claims["email"] = user.Email
-		// claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-		// https://golang-jwt.github.io/jwt/usage/create/
-		// 刪掉 var block，直接用 :=
-		t := jwt.NewWithClaims(jwt.SigningMethodHS256, //
+		// HMAC 系列的簽名方法（也就是 HS256、HS384、HS512）
+		t := jwt.NewWithClaims(jwt.SigningMethodHS256,
 			jwt.MapClaims{
 				"user_id": user.ID,
 				"email":   user.Email,
 				"exp":     time.Now().Add(24 * time.Hour).Unix(),
 			})
 
-		tokenString, err := t.SignedString([]byte(cfg.JWTSecret)) //  HMAC 的 byte secret，這邊用的不是 ES256
+		tokenString, err := t.SignedString([]byte(cfg.JWTSecret)) // 這邊用 HS256演算法
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token: " + err.Error()})
