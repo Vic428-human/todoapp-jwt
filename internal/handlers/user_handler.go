@@ -95,12 +95,14 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		// HMAC 系列的簽名方法（也就是 HS256、HS384、HS512）
+		// creating, signing, and encoding a JWT token using the HMAC signing method （也就是 HS256、HS384、HS512）
+		// 登入時「建立 token 的 claims」，之後解析時也是使用 MapClaims
 		t := jwt.NewWithClaims(jwt.SigningMethodHS256,
 			jwt.MapClaims{
 				"user_id": user.ID,
 				"email":   user.Email,
-				"exp":     time.Now().Add(24 * time.Hour).Unix(),
+				"exp":     time.Now().Add(24 * time.Hour).Unix(), // Unix() 代表 UTC 秒數時間戳
+				// JSON 裡的 number decode 後預設會變成 float64
 			})
 
 		tokenString, err := t.SignedString([]byte(cfg.JWTSecret)) // 這邊用 HS256演算法
