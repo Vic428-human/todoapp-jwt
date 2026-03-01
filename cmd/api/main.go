@@ -6,6 +6,7 @@ import (
 	"todo_api/internal/config"
 	"todo_api/internal/database"
 	"todo_api/internal/handlers"
+	"todo_api/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool" // PostgreSQL驅動程式的connection pool版本，提供高效連線管理
@@ -53,6 +54,9 @@ func main() {
 	router.PUT("/todos/:id", handlers.UpdateToDoHandler(pool))
 	router.POST("/auth/register", handlers.CreateUserHandler(pool))
 	router.POST("/auth/login", handlers.LoginHandler(pool, cfg))
+
+	// Middleware Test Route
+	router.GET("/protected-test", middleware.AuthMiddleware(cfg), handlers.TestProtectedHandler())
 
 	// 交易所才會用到，只是在這進行測試
 	router.POST("/products", handlers.CreatteProductHandler(pool))

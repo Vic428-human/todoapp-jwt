@@ -71,7 +71,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 				return
 			}
 
-			c.Set("user_id", userID)
+			c.Set("user_id", userID) // 之後 handler 中可以用 c.Get("user_id")去取得
 			c.Next()
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})

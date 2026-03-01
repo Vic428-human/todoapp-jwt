@@ -115,3 +115,21 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config) gin.HandlerFunc {
 		c.JSON(http.StatusOK, LoginResponse{Token: tokenString})
 	}
 }
+
+func TestProtectedHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Comma Ok" 慣例， 從 map 取值，val, ok := myMap["key"]
+		// 避免 Null/Nil 錯誤：如果 Key 不存在，value 通常會是 nil
+		// 錯誤示範： userID := c.Get("user_id") (如果 userID 是 nil，程式會 Panic)
+		userID, ok := c.Get("user_id") // 正確示範：先檢查 ok ，確保有值再做斷言。
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "protected route accessed successfully",
+			"user_id": userID})
+
+	}
+}
