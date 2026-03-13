@@ -41,7 +41,7 @@ func CreateTodo(pool *pgxpool.Pool, title string, completed bool) (*models.Todo,
 	return &todo, nil
 }
 
-func GetAllTodos(pool *pgxpool.Pool) ([]models.Todo, error) {
+func GetTodos(pool *pgxpool.Pool) (*models.TodoListResponse, error) {
 
 	// 建立帶有背景上下文的連線池
 	var ctx context.Context
@@ -78,7 +78,15 @@ func GetAllTodos(pool *pgxpool.Pool) ([]models.Todo, error) {
 		return nil, fmt.Errorf("讀取 todos 失敗: %w", err)
 	}
 
-	return todos, nil
+	response := &models.TodoListResponse{
+		Items:      todos,
+		Page:       1,
+		PageSize:   len(todos),
+		TotalCount: len(todos),
+		TotalPages: 1,
+	}
+
+	return response, nil
 }
 
 func GetTodoByID(pool *pgxpool.Pool, id int) (*models.Todo, error) {
