@@ -3,11 +3,13 @@ package main
 
 import (
 	"log"
+	"time"
 	"todo_api/internal/config"
 	"todo_api/internal/database"
 	"todo_api/internal/handlers"
 	"todo_api/internal/middleware"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool" // PostgreSQL驅動程式的connection pool版本，提供高效連線管理
 )
@@ -35,10 +37,18 @@ func main() {
 	// * is a pointer, reference something in the memory
 	// pointer refers to the address or instance in memory, and not copy entire thing
 	var router *gin.Engine = gin.Default() // gin => do client request and response
+	router.SetTrustedProxies(nil)
 
-	// 2️⃣ 將「同一個」pool 實例傳給所有 handler
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3001"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
+	// 將「同一個」pool 實例傳給所有 handler
 	router.GET("/", func(c *gin.Context) {
-		router.SetTrustedProxies(nil) // if you don't use any proxy, you can disable this feature by using nil, then Context.ClientIP() will return the remote address directly to avoid some unnecessary computation
 		// gin.H is a shortcut for map[string]interface{} or map[string]any
 		c.JSON(200, gin.H{
 			"message":  "todo api running successfully",
@@ -49,6 +59,7 @@ func main() {
 
 	// 當前專案會用到
 	router.POST("/todos", handlers.CreateTodoHandler(pool))
+	// 0313的時候有改成透過分頁查詢
 	router.GET("/todos", handlers.GetTodosHandler(pool))
 	router.GET("/todos/:id", handlers.GetTodoByIDHandler(pool))
 	router.PUT("/todos/:id", handlers.UpdateToDoHandler(pool))
@@ -61,7 +72,7 @@ func main() {
 	// 交易所才會用到，只是在這進行測試
 	router.POST("/products", handlers.CreatteProductHandler(pool))
 	router.GET("/products", handlers.GetAllProductsHandler(pool)) // 無 keyword：全拿
-	router.PUT("products/:id", handlers.UpdateProductHandler(pool))
+	router.PUT("/products/:id", handlers.UpdateProductHandler(pool))
 	router.GET("/products/:id", handlers.GetProductByIDHandler(pool))
 	// router 加這行（不碰現有）已經實驗過搜尋 "太陽神" 關鍵字會只拿到 太陽神有關的商品列表 => http://localhost:3000/products/search?keyword=太陽神
 	router.GET("/products/search", handlers.ListProductsHandler(pool))
