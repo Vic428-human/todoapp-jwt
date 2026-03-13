@@ -24,3 +24,12 @@ type Todo struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at" `
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
+
+// 你開始讓後端有能力回傳 資料本身、分頁 metadata
+type TodoListResponse struct {
+	Items      []Todo `json:"items"`
+	Page       int    `json:"page"`
+	PageSize   int    `json:"pageSize"`
+	TotalCount int    `json:"totalCount"`
+	TotalPages int    `json:"totalPages"`
+}
