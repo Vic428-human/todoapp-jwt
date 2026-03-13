@@ -52,11 +52,26 @@ func CreateTodoHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 	}
 }
 
-func GetAllTodosHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+func GetTodosHandler(pool *pgxpool.Pool) gin.HandlerFunc {
+
 	return func(c *gin.Context) {
-		result, err := repository.GetTodos(pool)
+		pageStr := c.DefaultQuery("page", "1")
+		pageSizeStr := c.DefaultQuery("pageSize", "5")
+		// 先讓 handler 有能力接收 pagination 參數
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page < 1 {
+			page = 1
+		}
+
+		pageSize, err := strconv.Atoi(pageSizeStr)
+		if err != nil || pageSize < 1 {
+			pageSize = 5
+		}
+
+		result, err := repository.GetTodos(pool, page, pageSize)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 		c.JSON(http.StatusOK, result)
 	}

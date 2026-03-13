@@ -41,7 +41,7 @@ func CreateTodo(pool *pgxpool.Pool, title string, completed bool) (*models.Todo,
 	return &todo, nil
 }
 
-func GetTodos(pool *pgxpool.Pool) (*models.TodoListResponse, error) {
+func GetTodos(pool *pgxpool.Pool, page int, pageSize int) (*models.TodoListResponse, error) {
 
 	// 建立帶有背景上下文的連線池
 	var ctx context.Context
@@ -52,14 +52,24 @@ func GetTodos(pool *pgxpool.Pool) (*models.TodoListResponse, error) {
 
 	utils.PerformOperation(ctx)
 
-	// 在資料表名稱 todos 中，對 表 的欄位新增一筆資料
+	offset := (page - 1) * pageSize // 決定前面要先跳過多少筆資料，第 1 頁：前面不用跳過，第 2 頁：先跳過第 1 頁那些資料，第 3 頁：先跳過前 2 頁那些資料
+	// 先查總筆數
+	var totalCount int
+	var countQuery string = `SELECT COUNT(*) FROM todos`
+	err := pool.QueryRow(ctx, countQuery).Scan(&totalCount)
+	if err != nil {
+		return nil, fmt.Errorf("查詢 todos 總數失敗: %w", err)
+	}
+
+	// 再查當前頁資料
 	var query string = `
 		SELECT id, title, completed, created_at, updated_at
 		FROM todos
 		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2
 	`
-
-	rows, err := pool.Query(ctx, query)
+	// LIMIT => 最多取幾筆, OFFSET => 跳過幾筆
+	rows, err := pool.Query(ctx, query, pageSize, offset)
 	if err != nil {
 		return nil, fmt.Errorf("查詢 todos 失敗: %w", err)
 	}
@@ -78,12 +88,18 @@ func GetTodos(pool *pgxpool.Pool) (*models.TodoListResponse, error) {
 		return nil, fmt.Errorf("讀取 todos 失敗: %w", err)
 	}
 
+	// ceil(totalCount / pageSize) => 向上取整
+	totalPages := (totalCount + pageSize - 1) / pageSize
+	if totalPages == 0 {
+		totalPages = 1
+	}
+
 	response := &models.TodoListResponse{
 		Items:      todos,
-		Page:       1,
-		PageSize:   len(todos),
-		TotalCount: len(todos),
-		TotalPages: 1,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalCount: totalCount,
+		TotalPages: totalPages,
 	}
 
 	return response, nil
