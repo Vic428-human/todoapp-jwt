@@ -40,7 +40,7 @@ func main() {
 	router.SetTrustedProxies(nil)
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3001"},
+		AllowOrigins:     []string{"http://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
@@ -59,8 +59,8 @@ func main() {
 
 	// 當前專案會用到
 	router.POST("/todos", handlers.CreateTodoHandler(pool))
-	// 0313的時候有改成透過分頁查詢
-	router.GET("/todos", handlers.GetTodosHandler(pool))
+	// 0315的時候已經把 users + pagination 放進去交易所前台專案了
+	router.GET("/todos", handlers.GetTodosHandler(pool)) // 有分頁
 	router.GET("/todos/:id", handlers.GetTodoByIDHandler(pool))
 	router.PUT("/todos/:id", handlers.UpdateToDoHandler(pool))
 	router.POST("/auth/register", handlers.CreateUserHandler(pool))
