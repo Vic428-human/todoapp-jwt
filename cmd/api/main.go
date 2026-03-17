@@ -1,17 +1,23 @@
-// reponsible forrunning database
+// responsible for running database
 package main
 
 import (
+	"context"
 	"log"
 	"time"
+
 	"todo_api/internal/config"
 	"todo_api/internal/database"
 	"todo_api/internal/handlers"
 	"todo_api/internal/middleware"
+	"todo_api/internal/repository"
+	"todo_api/internal/service"
+
+	"cloud.google.com/go/storage"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool" // PostgreSQL驅動程式的connection pool版本，提供高效連線管理
+	"github.com/jackc/pgx/v5/pgxpool" // PostgreSQL 驅動程式的 connection pool 版本，提供高效連線管理
 )
 
 func main() {
@@ -22,21 +28,36 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	var pool *pgxpool.Pool
 
-	// 1️⃣ 應用啟動時：只建立「一次」連線池（生命週期 = 整個應用）
+	// 1. 應用啟動時：只建立一次連線池（生命週期 = 整個應用）
 	pool, err = database.Connect(cfg.DatabaseURL)
 	if err != nil {
-		// 連線失敗時立即終止程式
 		log.Fatal(err)
 	}
+	defer pool.Close()
 
-	defer pool.Close() // 確保程式結束時關閉連線池
+	// 建立 GCS client
+	ctx := context.Background()
 
-	// create server, take a look at routes, want api fast, use instance from the memory, pointer variable
-	// * is a pointer, reference something in the memory
-	// pointer refers to the address or instance in memory, and not copy entire thing
-	var router *gin.Engine = gin.Default() // gin => do client request and response
+	storageClient, err := storage.NewClient(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer storageClient.Close()
+
+	// 建立 image repository
+	imageRepo := repository.NewGCImageRepository(
+		storageClient,
+		cfg.GCSBucketName,
+	)
+
+	// 建立 user service
+	userService := service.NewUserService(pool, imageRepo)
+
+	// create server
+	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
 
 	router.Use(cors.New(cors.Config{
@@ -47,36 +68,42 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// 將「同一個」pool 實例傳給所有 handler
+	// health check
 	router.GET("/", func(c *gin.Context) {
-		// gin.H is a shortcut for map[string]interface{} or map[string]any
 		c.JSON(200, gin.H{
 			"message":  "todo api running successfully",
 			"status":   "success",
 			"database": "connected",
+			"gcs":      "connected",
 		})
 	})
 
-	// 當前專案會用到
+	// Todo routes
 	router.POST("/todos", handlers.CreateTodoHandler(pool))
-	// 0315的時候已經把 users + pagination 放進去交易所前台專案了
-	router.GET("/todos", handlers.GetTodosHandler(pool)) // 有分頁
+	router.GET("/todos", handlers.GetTodosHandler(pool))
 	router.GET("/todos/:id", handlers.GetTodoByIDHandler(pool))
 	router.PUT("/todos/:id", handlers.UpdateToDoHandler(pool))
+
+	// Auth routes
 	router.POST("/auth/register", handlers.CreateUserHandler(pool))
 	router.POST("/auth/login", handlers.LoginHandler(pool, cfg))
 
-	// Middleware Test Route
+	// User routes
+	// 這條就是之後用 Postman / 前端測試頭像上傳的 API
+	router.PUT("/users/:id/profile-image", handlers.SetProfileImageHandler(userService))
+
+	// Middleware test route
 	router.GET("/protected-test", middleware.AuthMiddleware(cfg), handlers.TestProtectedHandler())
 
-	// 交易所才會用到，只是在這進行測試
+	// Product routes
 	router.POST("/products", handlers.CreatteProductHandler(pool))
-	router.GET("/products", handlers.GetAllProductsHandler(pool)) // 無 keyword：全拿
+	router.GET("/products", handlers.GetAllProductsHandler(pool))
 	router.PUT("/products/:id", handlers.UpdateProductHandler(pool))
 	router.GET("/products/:id", handlers.GetProductByIDHandler(pool))
-	// router 加這行（不碰現有）已經實驗過搜尋 "太陽神" 關鍵字會只拿到 太陽神有關的商品列表 => http://localhost:3000/products/search?keyword=太陽神
 	router.GET("/products/search", handlers.ListProductsHandler(pool))
 
-	router.Run(":" + cfg.Port) // listens on 0.0.0.0:8080 by default
+	log.Printf("server starting on port %s\n", cfg.Port)
+	log.Printf("GCS bucket in use: %s\n", cfg.GCSBucketName)
 
+	router.Run(":" + cfg.Port)
 }

@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"time"
+
 	"todo_api/internal/config"
 	"todo_api/internal/models"
 	"todo_api/internal/repository"
+	"todo_api/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -44,18 +47,20 @@ func CreateUserHandler(pool *pgxpool.Pool) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "password must be at least 6 characters long"})
 			return
 		}
+
 		// 把加鹽密碼存在db，但回傳的時候不要把密碼回傳給USER
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerRequest.Password), bcrypt.DefaultCost)
-
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
 			return
 		}
 
-		user := &models.User{Email: registerRequest.Email, Password: string(hashedPassword)}
+		user := &models.User{
+			Email:    registerRequest.Email,
+			Password: string(hashedPassword),
+		}
 
 		createdUser, err := repository.CreateUser(pool, user)
-
 		if err != nil {
 			if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "email already exists"})
@@ -75,38 +80,32 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config) gin.HandlerFunc {
 
 		if err := c.BindJSON(&loginRequest); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 
 		user, err := repository.GetUserByEmail(pool, loginRequest.Email)
-
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return
 		}
-		// 把存在db的加鹽密碼跟前端傳來的密碼比對
-		// 例如，db中的密碼是 $2a$10$uyx7Xo1MTx1OYiBC4Gs.qO5NdWt2Wt55bGVDz.oOSHPKij23vf.Ni 這是加鹽後的密碼
-		// uyx7Xo1MTx1OYiBC4Gs 就是加鹽本身，當使用者登入的時候，會拿 uyx7Xo1MTx1OYiBC4Gs 這段+使用者輸入的密碼進行加鹽，若加鹽後跟db的加鹽後一致，則等於密碼相同
-		// Authorization: 是賦予權限， Authentication是進行權限驗證
-		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginRequest.Password))
 
+		// 把存在db的加鹽密碼跟前端傳來的密碼比對
+		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginRequest.Password))
 		if err != nil {
 			// 密碼錯誤代表沒成功被賦予權限，所以失敗
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 			return
 		}
 
-		// creating, signing, and encoding a JWT token using the HMAC signing method （也就是 HS256、HS384、HS512）
-		// 登入時「建立 token 的 claims」，之後解析時也是使用 MapClaims
+		// creating, signing, and encoding a JWT token using the HMAC signing method
 		t := jwt.NewWithClaims(jwt.SigningMethodHS256,
 			jwt.MapClaims{
 				"user_id": user.ID,
 				"email":   user.Email,
 				"exp":     time.Now().Add(24 * time.Hour).Unix(), // Unix() 代表 UTC 秒數時間戳
-				// JSON 裡的 number decode 後預設會變成 float64
 			})
 
-		tokenString, err := t.SignedString([]byte(cfg.JWTSecret)) // 這邊用 HS256演算法
-
+		tokenString, err := t.SignedString([]byte(cfg.JWTSecret))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token: " + err.Error()})
 			return
@@ -116,12 +115,61 @@ func LoginHandler(pool *pgxpool.Pool, cfg *config.Config) gin.HandlerFunc {
 	}
 }
 
+func SetProfileImageHandler(userService *service.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 1. 從 URL 取得 user id
+		id := c.Param("id")
+		if id == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "user id is required",
+			})
+			return
+		}
+
+		// 2. 從 multipart/form-data 取得圖片檔案
+		// Postman / 前端欄位名稱要用 image
+		imageFileHeader, err := c.FormFile("image")
+		if err != nil {
+			log.Printf("failed to get image file from request: %v\n", err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "failed to get image file",
+			})
+			return
+		}
+
+		log.Printf(
+			"received upload file: userID=%s filename=%s size=%d\n",
+			id,
+			imageFileHeader.Filename,
+			imageFileHeader.Size,
+		)
+
+		// 3. 呼叫 service 處理完整流程
+		updatedUser, err := userService.SetProfileImage(
+			c.Request.Context(),
+			id,
+			imageFileHeader,
+		)
+		if err != nil {
+			log.Printf("failed to set profile image: %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "failed to update profile image",
+			})
+			return
+		}
+
+		// 4. 回傳更新後的 user
+		c.JSON(http.StatusOK, gin.H{
+			"message": "profile image updated successfully",
+			"user":    updatedUser,
+		})
+	}
+}
+
 func TestProtectedHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Comma Ok" 慣例， 從 map 取值，val, ok := myMap["key"]
-		// 避免 Null/Nil 錯誤：如果 Key 不存在，value 通常會是 nil
-		// 錯誤示範： userID := c.Get("user_id") (如果 userID 是 nil，程式會 Panic)
-		userID, ok := c.Get("user_id") // 正確示範：先檢查 ok ，確保有值再做斷言。
+		// "Comma Ok" 慣例，從 map 取值
+		userID, ok := c.Get("user_id")
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "user_id"})
 			return
@@ -129,7 +177,7 @@ func TestProtectedHandler() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{
 			"message": "protected route accessed successfully",
-			"user_id": userID})
-
+			"user_id": userID,
+		})
 	}
 }
