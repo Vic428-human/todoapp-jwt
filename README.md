@@ -1,9 +1,7 @@
-> 這個專案主要用於規劃 JWT + GIN + GOLANG + PostgreSQL 規劃登入、註冊功能，以及常規的API CRUD測試..等
+> 這個專案主要用於規劃 JWT + GIN + GOLANG + PostgreSQL 規劃登入、註冊功能、圖片上傳、分頁功能
 
-### TODOS:
-
-- [暫緩] 先把先前的login register調整好後，放在交易所，再回頭繼續寫這裡 
-- [X] 26/0223 註冊帳號、登入帳號、jwt加鹽
+# 最近完成
+- 圖片上傳、分頁功能 (3月)
 
 - [本專案學習過程中的筆記整理](https://www.notion.so/2-2f6a54651e3e80d888ede6403ad3bf6a)
 
@@ -143,28 +141,6 @@ yourproject/
 └── frontend/ 預期放登入註冊畫面
 ```
 
-### 知識點
-
-- [Basic Timeout with Context](https://go-cookbook.com/snippets/context/using-context-for-timeouts)
-
-- BindJSON & ShouldBindJSON 差異
-
-```
-ShouldBindJSON：只負責綁定數據，出錯時返回 error，不會自動發送 HTTP 回應。你需要手動寫 if err != nil 來處理錯誤（推薦用於生產環境）。
-//  先驗證從 client 傳來的資料
-		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-BindJSON：負責綁定數據，出錯時返回 error，並且自動調用 c.AbortWithError(400, err)。這意味著它會自動終止 handler 並發送 400 狀態碼（通常用於快速原型，生產環境較少用）。
-	// BindJSON 的「標準」用法
-		if err := c.BindJSON(&registerRequest); err != nil {
-			// 只需要 return
-			// 因為 BindJSON 內部已經調用了 AbortWithError(400)
-			// 客戶端會收到 400 狀態碼，但 Response Body 通常是空的或由全局錯誤處理器決定
-			return
-		}
-```
 
 ### 比較這三個 Go Web 框架
 
