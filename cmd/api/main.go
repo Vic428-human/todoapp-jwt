@@ -2,7 +2,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"time"
 
@@ -10,10 +9,11 @@ import (
 	"todo_api/internal/database"
 	"todo_api/internal/handlers"
 	"todo_api/internal/middleware"
-	"todo_api/internal/repository"
-	"todo_api/internal/service"
 
-	"cloud.google.com/go/storage"
+	// "todo_api/internal/repository"
+	// "todo_api/internal/service"
+
+	// "cloud.google.com/go/storage"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -38,23 +38,28 @@ func main() {
 	}
 	defer pool.Close()
 
+	// =========================
+	// 暫時停用 GCS 相關初始化
+	// 等 Render 上的 GCS credentials 設定好後再打開
+	// =========================
+
 	// 建立 GCS client
-	ctx := context.Background()
-
-	storageClient, err := storage.NewClient(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer storageClient.Close()
-
+	// ctx := context.Background()
+	//
+	// storageClient, err := storage.NewClient(ctx)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer storageClient.Close()
+	//
 	// 建立 image repository
-	imageRepo := repository.NewGCImageRepository(
-		storageClient,
-		cfg.GCSBucketName,
-	)
-
+	// imageRepo := repository.NewGCImageRepository(
+	// 	storageClient,
+	// 	cfg.GCSBucketName,
+	// )
+	//
 	// 建立 user service
-	userService := service.NewUserService(pool, imageRepo)
+	// userService := service.NewUserService(pool, imageRepo)
 
 	// create server
 	var router *gin.Engine = gin.Default()
@@ -76,7 +81,7 @@ func main() {
 			"message":  "todo api running successfully",
 			"status":   "success",
 			"database": "connected",
-			"gcs":      "connected",
+			"gcs":      "disabled",
 		})
 	})
 
@@ -92,7 +97,8 @@ func main() {
 
 	// User routes
 	// 這條就是之後用 Postman / 前端測試頭像上傳的 API
-	router.PUT("/users/:id/profile-image", handlers.SetProfileImageHandler(userService))
+	// 先暫時註解，等 GCS credentials 設定好再打開
+	// router.PUT("/users/:id/profile-image", handlers.SetProfileImageHandler(userService))
 
 	// Middleware test route
 	router.GET("/protected-test", middleware.AuthMiddleware(cfg), handlers.TestProtectedHandler())
