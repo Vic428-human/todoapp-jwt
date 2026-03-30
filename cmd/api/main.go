@@ -4,7 +4,6 @@ package main
 import (
 	"context"
 	"log"
-	"time"
 
 	"todo_api/internal/config"
 	"todo_api/internal/database"
@@ -15,7 +14,6 @@ import (
 
 	"cloud.google.com/go/storage"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool" // PostgreSQL 驅動程式的 connection pool 版本，提供高效連線管理
 )
@@ -60,13 +58,7 @@ func main() {
 	var router *gin.Engine = gin.Default()
 	router.SetTrustedProxies(nil)
 
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	router.Use(middleware.CORSMiddleware())
 
 	// health check
 	router.GET("/", func(c *gin.Context) {
