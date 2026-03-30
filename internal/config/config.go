@@ -2,7 +2,7 @@ package config
 
 import (
 	"log"
-	"os" //retrieve environment variables
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -14,29 +14,27 @@ type Config struct {
 	GCSBucketName string
 }
 
-/*
-make api call to database
-*/
-// pointer : point to the address or instance in memory
 func Load() (*Config, error) {
-	// loads .env from the current directory
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	// 本機有 .env 就讀，沒有也不要中止
+	if err := godotenv.Load(); err != nil {
+		log.Println(".env file not found, using system environment variables")
 	}
 
-	/* *pointer (point to a struct) = &reference{} (reference to a struct as value) => https://stackoverflow.com/questions/47296325/passing-by-reference-and-value-in-go-to-functions
-		func someFunc(x *int) {
-	    *x = 2 // Whatever variable caller passed in will now be 2
-	    y := 7
-	    x = &y // has no impact on the caller because we overwrote the pointer value!
-	}
-	*/
-	var config *Config = &Config{
-		DatabaseURL:   os.Getenv("POSTGRES_URL"),
-		Port:          os.Getenv("POSTGRES_PORT"),
+	cfg := &Config{
+		DatabaseURL:   os.Getenv("DATABASE_URL"),
+		Port:          os.Getenv("PORT"),
 		JWTSecret:     os.Getenv("JWT_SECRET"),
 		GCSBucketName: os.Getenv("GCS_BUCKET_NAME"),
 	}
-	return config, nil
+
+	// 可選：本機預設值
+	if cfg.Port == "" {
+		cfg.Port = "8080"
+	}
+
+	if cfg.DatabaseURL == "" {
+		log.Println("warning: DATABASE_URL is empty")
+	}
+
+	return cfg, nil
 }
