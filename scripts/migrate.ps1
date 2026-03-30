@@ -41,7 +41,8 @@ $name = $args[1]
 # 根據 command 決定要執行哪個 migrate 行為
 switch ($command) {
     # Run migrations
-    "up" { migrate -database $env:POSTGRES_URL -path migrations up }
+    # "up" { migrate -database $env:POSTGRES_URL -path migrations up }
+    "up" { migrate -database $env:DATABASE_URL -path migrations up }
     # 回滾 migration
     "down" { 
         # 如果有指定參數就用它（回滾幾個）
