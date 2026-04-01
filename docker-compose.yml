@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: todo_api
+    ports:
+      - "8080:8080"
+    environment:
+      # API 需要的環境變數，包含 DB 連線字串、Port、JWT、GCS bucket
+      - DATABASE_URL=postgres://postgres:ss20191106@db:5432/todo_api?sslmode=disable
+      - PORT=8080
+      - JWT_SECRET=your-jwt-password-string-security
+      - GCS_BUCKET_NAME=my-bucket
+    depends_on:
+      db:
+        # 原本的 depends_on 只保證 DB 容器有啟動，不保證 DB 已經 ready
+        # 加上 condition: service_healthy → 等 DB 健康檢查通過後才啟動 API
+        condition: service_healthy
+      migrate:
+        # API 也要等 migration 成功跑完，確保表格已建立
+        condition: service_completed_successfully
+    # 如果 API 因為 DB 還沒 ready 而退出，會自動重試
+    restart: on-failure
+
+  db:
+    image: postgres:16-alpine
+    container_name: todo_db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=ss20191106
+      - POSTGRES_DB=todo_api
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      # healthcheck 會定期檢查 DB 是否能接受連線
+      # pg_isready 是 Postgres 提供的工具，能回報 DB 狀態
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s   # 每 10 秒檢查一次
+      timeout: 5s     # 最多等 5 秒
+      retries: 5      # 連續失敗 5 次才算 unhealthy
+
+  migrate:
+    # 使用官方 migrate CLI 映像
+    image: migrate/migrate
+    volumes:
+      - ./migrations:/migrations   # 把專案裡的 migrations 資料夾掛進容器
+    depends_on:
+      db:
+        condition: service_healthy # 等 DB ready 後再跑 migration
+    command: [
+      "-path", "/migrations",
+      "-database", "postgres://postgres:ss20191106@db:5432/todo_api?sslmode=disable",
+      "up"
+    ]
+    # 這個 service 只會在啟動時跑一次 migration，成功後就結束
+
+volumes:
+  db_data:
