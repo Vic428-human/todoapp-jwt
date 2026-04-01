@@ -16,8 +16,12 @@ type Config struct {
 
 func Load() (*Config, error) {
 	// 本機有 .env 就讀，沒有也不要中止
+	wd, _ := os.Getwd()
+	log.Println("current working directory:", wd)
 	if err := godotenv.Load(); err != nil {
-		log.Println(".env file not found, using system environment variables")
+		log.Printf("failed to load .env: %v", err)
+	} else {
+		log.Println(".env loaded successfully")
 	}
 
 	cfg := &Config{
@@ -31,7 +35,7 @@ func Load() (*Config, error) {
 	if cfg.Port == "" {
 		cfg.Port = "8080"
 	}
-
+	log.Printf("DatabaseURL: %q", cfg.DatabaseURL)
 	if cfg.DatabaseURL == "" {
 		log.Println("warning: DATABASE_URL is empty")
 	}
