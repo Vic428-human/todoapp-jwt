@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS articles (
     author_id UUID NOT NULL,                         -- 作者的 ID，必須存在，連結到 users 表
     title VARCHAR(255) NOT NULL,                     -- 文章標題，限制 255 字元
     summary TEXT NOT NULL,                           -- 文章摘要
-    content TEXT NOT NULL,                           -- 文章完整內容
+    content TEXT,                                    -- 文章完整內容 允許 NULL
     difficulty VARCHAR(50) NOT NULL,                 -- 難度標記 (beginner/intermediate/advanced)
     status VARCHAR(50) NOT NULL DEFAULT 'draft',     -- 狀態 (draft/published/archived)，預設 draft
     published_at TIMESTAMP WITH TIME ZONE,           -- 發布時間，含時區
@@ -15,10 +15,11 @@ CREATE TABLE IF NOT EXISTS articles (
 
     -- 外鍵約束：作者必須存在於 users 表
     -- ON DELETE CASCADE 的作用 → 當作者被刪除時，相關文章也會自動刪除
+    -- ON DELETE RESTRICT 的作用 → 當作者被刪除時，相關文章不會自動刪除
     CONSTRAINT fk_articles_author
         FOREIGN KEY (author_id)
         REFERENCES users(id)
-        ON DELETE CASCADE, 
+        ON DELETE CASCADE,  
 
     -- 檢查約束：限制難度只能是三種
     CONSTRAINT chk_articles_difficulty
