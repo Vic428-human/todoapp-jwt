@@ -39,9 +39,9 @@ type ArticleListItem struct {
 	ViewCount    int        `json:"view_count" db:"view_count"`
 
 	// 先把作者資訊直接攤平在列表 item 裡
-	AuthorID    string `json:"author_id" db:"author_id"`
-	AuthorEmail string `json:"author_email" db:"author_email"`
-	AuthorImage string `json:"author_image_url" db:"author_image_url"`
+	AuthorID    string  `json:"author_id" db:"author_id"`
+	AuthorEmail string  `json:"author_email" db:"author_email"`
+	AuthorImage *string `json:"author_image_url" db:"author_image_url"`
 }
 
 // ArticleListResponse
