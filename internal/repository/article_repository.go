@@ -36,6 +36,9 @@ func GetArticles(pool *pgxpool.Pool, page int, pageSize int, tag string, difficu
 
 	args := []interface{}{}
 	argIndex := 1
+
+	// 假設 difficulty 跟 tag 都有值，最後組出來的 SQL WHERE 子句會長這樣：
+
 	// 	conditions = []string{
 	//     "a.status = 'published'",
 	//     "a.difficulty = $1",
@@ -49,10 +52,9 @@ func GetArticles(pool *pgxpool.Pool, page int, pageSize int, tag string, difficu
 	// 	conditions = []string{
 	//     "a.status = 'published'",
 	//     "a.difficulty = $1",
-	//     `	EXISTS (` 這段,
+	//     `	EXISTS ( ` , 這段是為了實現「只留下那些：有綁定某個特定 slug 的 tag，而且那個 tag 還是啟用中的文章」
 	// }
 	if tag != "" {
-		// 只留下那些：有綁定某個特定 slug 的 tag，而且那個 tag 還是啟用中的文章
 		conditions = append(conditions, fmt.Sprintf(`
 		EXISTS (
 			SELECT 1
