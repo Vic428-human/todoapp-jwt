@@ -22,7 +22,6 @@ func GetArticles(pool *pgxpool.Pool, page int, pageSize int, tag string, difficu
 	var ctx context.Context
 	var cancel context.CancelFunc
 
-	// 設定 DB 查詢逾時時間，避免請求卡太久
 	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -37,11 +36,34 @@ func GetArticles(pool *pgxpool.Pool, page int, pageSize int, tag string, difficu
 
 	args := []interface{}{}
 	argIndex := 1
-	// difficulty 不存在=> whereClause = "a.status = 'published'"
-	// difficulty 存在 => whereClause = "a.status = 'published' AND a.difficulty = $1"
+	// 	conditions = []string{
+	//     "a.status = 'published'",
+	//     "a.difficulty = $1",
+	// }
 	if difficulty != "" {
 		conditions = append(conditions, fmt.Sprintf("a.difficulty = $%d", argIndex)) //  "a.difficulty = $1"
 		args = append(args, difficulty)
+		argIndex++
+	}
+
+	// 	conditions = []string{
+	//     "a.status = 'published'",
+	//     "a.difficulty = $1",
+	//     `	EXISTS (` 這段,
+	// }
+	if tag != "" {
+		// 只留下那些：有綁定某個特定 slug 的 tag，而且那個 tag 還是啟用中的文章
+		conditions = append(conditions, fmt.Sprintf(`
+		EXISTS (
+			SELECT 1
+			FROM article_tags at
+			JOIN tags t ON at.tag_id = t.id
+			WHERE at.article_id = a.id
+			  AND t.slug = $%d
+			  AND t.is_active = true
+		)
+	`, argIndex))
+		args = append(args, tag)
 		argIndex++
 	}
 
