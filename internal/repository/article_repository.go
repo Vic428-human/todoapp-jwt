@@ -15,16 +15,9 @@ import (
 // GetArticles
 // 用途：
 // 這支 function 負責查文章列表資料。
-// 目前第一版先支援：
-// 1. 分頁
-// 2. difficulty 篩選
-// 3. 只查 status = 'published' 的文章
-// 4. join users 取作者基本資料
-//
-// 為什麼先不做 tag？
-// 因為你現在先把最基本的 article list 查詢跑通比較重要。
-// 先把分頁 + difficulty + published status 穩定後，
-// 下一步再把 tag 篩選接進來，debug 會容易很多。
+// 目前第一版先支援
+// /articles?page=1&pageSize=5
+// /articles?page=1&pageSize=5&difficulty=beginner
 func GetArticles(pool *pgxpool.Pool, page int, pageSize int, tag string, difficulty string) (*models.ArticleListResponse, error) {
 	var ctx context.Context
 	var cancel context.CancelFunc

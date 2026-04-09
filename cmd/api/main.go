@@ -95,6 +95,9 @@ func main() {
 	router.POST("/auth/register", handlers.CreateUserHandler(pool))
 	router.POST("/auth/login", handlers.LoginHandler(pool, cfg))
 
+	// Article routes
+	router.GET("/articles", handlers.GetArticlesHandler(pool))
+
 	// User routes
 	// 這條就是之後用 Postman / 前端測試頭像上傳的 API
 	// 先暫時註解，等 GCS credentials 設定好再打開
