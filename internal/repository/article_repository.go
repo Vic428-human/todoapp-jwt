@@ -12,12 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// GetArticles
-// 用途：
-// 這支 function 負責查文章列表資料。
-// 目前第一版先支援
-// /articles?page=1&pageSize=5
-// /articles?page=1&pageSize=5&difficulty=beginner
+// 查文章列表資料。 /articles?page=1&pageSize=5&difficulty=beginner&tag=beginner-friendly,deep-dive
 func GetArticles(pool *pgxpool.Pool, page int, pageSize int, tag string, difficulty string) (*models.ArticleListResponse, error) {
 	var ctx context.Context
 	var cancel context.CancelFunc
@@ -54,19 +49,47 @@ func GetArticles(pool *pgxpool.Pool, page int, pageSize int, tag string, difficu
 	//     "a.difficulty = $1",
 	//     `	EXISTS ( ` , 這段是為了實現「只留下那些：有綁定某個特定 slug 的 tag，而且那個 tag 還是啟用中的文章」
 	// }
+
+	// 目前採用 OR 邏輯：只要文章有符合其中任一個 tag，就會被查出來
 	if tag != "" {
-		conditions = append(conditions, fmt.Sprintf(`
-		EXISTS (
-			SELECT 1
-			FROM article_tags at
-			JOIN tags t ON at.tag_id = t.id
-			WHERE at.article_id = a.id
-			  AND t.slug = $%d
-			  AND t.is_active = true
-		)
-	`, argIndex))
-		args = append(args, tag)
-		argIndex++
+		// 先把前端傳進來的字串，用逗號切開，例如 "beginner-friendly,deep-dive"
+		rawTagSlugs := strings.Split(tag, ",")
+
+		tagSlugs := make([]string, 0, len(rawTagSlugs))
+		for _, slug := range rawTagSlugs {
+			trimmedSlug := strings.TrimSpace(slug)
+			// []string{"beginner-friendly", "", "deep-dive", ""}
+			// 避開 "" 這種無效的 slug
+			if trimmedSlug != "" {
+				tagSlugs = append(tagSlugs, trimmedSlug)
+			}
+		}
+
+		// 如果： tagSlugs := []string{"beginner-friendly", "deep-dive"}
+		// 那 placeholders := make([]string, 0, 2) => tagSlugs 相當於是預期有幾個 tag 即將被分配
+		if len(tagSlugs) > 0 {
+			placeholders := make([]string, 0, len(tagSlugs)) // placeholders == []string{} =>　[]string{"$2"} =>　[]string{"$2", "$3"}
+			for _, slug := range tagSlugs {
+				placeholders = append(placeholders, fmt.Sprintf("$%d", argIndex)) // 例如: fmt.Sprintf("$%d", 2) => "$2"
+				args = append(args, slug)
+				argIndex++
+			}
+
+			// tag=beginner-friendly,deep-dive => 目前這篇文章，有沒有綁到 beginner-friendly 或 deep-dive 其中任一個 tag？ 如果有 就留下
+			// t.slug IN ($2, $3) => t.slug IN ('beginner-friendly', 'deep-dive')
+			conditions = append(conditions, fmt.Sprintf(`
+			EXISTS ( 
+				SELECT 1
+				FROM article_tags at
+				JOIN tags t ON at.tag_id = t.id
+				WHERE at.article_id = a.id
+				  AND t.slug IN (%s)
+				  AND t.is_active = true
+			)
+		`, strings.Join(placeholders, ", ")))
+		}
+		// placeholders = []string{"$2", "$3"}
+		// strings.Join(placeholders, ", ") => "$2, $3"
 	}
 
 	// 把多個條件組成 WHERE 子句
