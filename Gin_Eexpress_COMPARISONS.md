@@ -32,7 +32,7 @@ type Config struct {
 
 func loadConfig() Config {
 	return Config{
-		Port:             getEnv("PORT", "8080"), // 定義key 跟 value
+		Port:             getEnv("PORT", "8081"), // 定義key 跟 value
 		DBPath:           getEnv("DATABASE_URL", "./data/orders.db"),
 		SessionSecretKey: getEnv("SESSION_SECRET_KEY", "pizza-order-secret-key"),
 	}

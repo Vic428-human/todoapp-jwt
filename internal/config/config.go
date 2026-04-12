@@ -33,7 +33,7 @@ func Load() (*Config, error) {
 
 	// 可選：本機預設值
 	if cfg.Port == "" {
-		cfg.Port = "8080"
+		cfg.Port = "8081"
 	}
 	log.Printf("DatabaseURL: %q", cfg.DatabaseURL)
 	if cfg.DatabaseURL == "" {
